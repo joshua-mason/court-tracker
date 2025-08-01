@@ -1,6 +1,28 @@
-export const CONFIG = {
-    courtPath: "wapping-gardens",
-    notificationEmail: "jmmason95@googlemail.com",
+import { CourtLocation, LocationSchedule } from "./types";
+
+export const COURT_LOCATIONS: CourtLocation[] = [
+  {
+    id: "wapping-gardens",
+    name: "Wapping Gardens Tennis Courts",
+    baseUrl: "https://tennistowerhamlets.com",
+    path: "wapping-gardens",
+    courts: [
+      {
+        name: "Court 1",
+        displayName: "Court 1"
+      }
+    ],
+    htmlSelectors: {
+      timeRowRegex: '<tr>\\s*<th class="time">(.+?)</th>\\s*<td class="courts">([\\s\\S]*?)</td>\\s*</tr>',
+      availableButtonSelector: "button available",
+      courtNameSelector: "Court 1"
+    }
+  }
+];
+
+export const LOCATION_SCHEDULES: LocationSchedule[] = [
+  {
+    locationId: "wapping-gardens",
     watchDays: [
       {
         weekdayIndex: 1,
@@ -47,5 +69,10 @@ export const CONFIG = {
         ],
       },
     ],
-  };
+  }
+];
+
+export const CONFIG = {
+  notificationEmail: "jmmason95@googlemail.com",
+};
   

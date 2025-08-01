@@ -1,13 +1,16 @@
-import { CONFIG } from "./config";
-import { Day, DayConfig, Result, CourtCheckError } from "./types";
+import { Day, DayConfig, Result, CourtCheckError, CourtLocation } from "./types";
 
-export function getAvailabilityForDay(dayConfig: DayConfig, now: Date, tz: string): Result<Day[], CourtCheckError> {
+export function getAvailabilityForDay(
+  location: CourtLocation, 
+  dayConfig: DayConfig, 
+  now: Date, 
+  tz: string
+): Result<Day[], CourtCheckError> {
   const targetDate = getNextDateForWeekday(dayConfig.weekdayIndex, now);
-
   const dateStr = Utilities.formatDate(targetDate, tz, "yyyy-MM-dd");
-  const url = `https://tennistowerhamlets.com/book/courts/${CONFIG.courtPath}/${dateStr}`;
+  const url = `${location.baseUrl}/book/courts/${location.path}/${dateStr}`;
 
-  Logger.log(`Checking ${dayConfig.label} (${dateStr}) at ${url}`);
+  Logger.log(`Checking ${location.name} - ${dayConfig.label} (${dateStr}) at ${url}`);
 
   let html: string;
   try {
@@ -26,20 +29,22 @@ export function getAvailabilityForDay(dayConfig: DayConfig, now: Date, tz: strin
           type: 'http_error',
           message: `HTTP ${resp.getResponseCode()}`,
           url,
-          statusCode: resp.getResponseCode()
+          statusCode: resp.getResponseCode(),
+          locationName: location.name
         }
       };
     }
     
     html = resp.getContentText();
   } catch (e) {
-    Logger.log("Fetch error: " + e);
+    Logger.log(`Fetch error for ${location.name}: ${e}`);
     return {
       success: false,
       error: {
         type: 'fetch_error',
         message: String(e),
-        url
+        url,
+        locationName: location.name
       }
     };
   }
@@ -50,7 +55,8 @@ export function getAvailabilityForDay(dayConfig: DayConfig, now: Date, tz: strin
       error: {
         type: 'html_parse_error',
         message: 'No <tr> elements found - possible HTML structure change',
-        url
+        url,
+        locationName: location.name
       }
     };
   }
@@ -59,7 +65,7 @@ export function getAvailabilityForDay(dayConfig: DayConfig, now: Date, tz: strin
     Logger.log("⚠️ Warning: Fetched HTML unusually short");
   }
 
-  const slots = extractAvailableSlots(html, dayConfig, dateStr);
+  const slots = extractAvailableSlots(html, location, dayConfig, dateStr);
   
   return {
     success: true,
@@ -78,6 +84,7 @@ function getNextDateForWeekday(targetWeekday: number, fromDate: Date): Date {
 
 function extractAvailableSlots(
   html: string,
+  location: CourtLocation,
   dayConfig: DayConfig,
   dateStr: string
 ): Day[] {
@@ -86,12 +93,11 @@ function extractAvailableSlots(
   const matches: Day[] = [];
 
   Logger.log(
-    `--- Parsing availability for ${dayConfig.label} (${dateStr}) ---`
+    `--- Parsing availability for ${location.name} - ${dayConfig.label} (${dateStr}) ---`
   );
   Logger.log(`Target hours: ${targetHours.join(", ")}`);
 
-  const rowRegex =
-    /<tr>\s*<th class="time">(.+?)<\/th>\s*<td class="courts">([\s\S]*?)<\/td>\s*<\/tr>/gi;
+  const rowRegex = new RegExp(location.htmlSelectors.timeRowRegex, 'gi');
 
   let rowMatch;
   while ((rowMatch = rowRegex.exec(html)) !== null) {
@@ -106,18 +112,24 @@ function extractAvailableSlots(
       continue;
     }
 
-    const hasAvailableCourt1 =
-      tdContent.includes("button available") && tdContent.includes("Court 1");
+    // Check each court at this location
+    for (const court of location.courts) {
+      const hasAvailableCourt = 
+        tdContent.includes(location.htmlSelectors.availableButtonSelector) && 
+        tdContent.includes(court.name);
 
-    if (hasAvailableCourt1) {
-      matches.push({
-        dateLabel: `${dayConfig.label} (${dateStr})`,
-        time: timeLabel,
-        url: `https://tennistowerhamlets.com/book/courts/${CONFIG.courtPath}/${dateStr}`,
-      });
-      Logger.log(`✅ Match: Court 1 at ${timeLabel}`);
-    } else {
-      Logger.log(`❌ No available Court 1 at ${timeLabel}`);
+      if (hasAvailableCourt) {
+        matches.push({
+          dateLabel: `${dayConfig.label} (${dateStr})`,
+          time: timeLabel,
+          url: `${location.baseUrl}/book/courts/${location.path}/${dateStr}`,
+          locationName: location.name,
+          courtName: court.displayName,
+        });
+        Logger.log(`✅ Match: ${court.displayName} at ${timeLabel}`);
+      } else {
+        Logger.log(`❌ No available ${court.displayName} at ${timeLabel}`);
+      }
     }
   }
 

@@ -25,14 +25,14 @@ export function sendNotificationEmail(allMatches: Day[], now: Date, tz: string):
   Logger.log(`Sent 1 email with ${allMatches.length} slot(s)`);
 }
 
-export function sendErrorSummaryNotification(errors: Array<{ dayLabel: string; error: CourtCheckError }>, now: Date, tz: string): void {
+export function sendErrorSummaryNotification(errors: Array<{ errorLabel: string; error: CourtCheckError }>, now: Date, tz: string): void {
   const nowStr = Utilities.formatDate(now, tz, "EEE dd MMM yyyy HH:mm");
   const subject = `❌ Court-watch: ${errors.length} Error${errors.length > 1 ? 's' : ''} – ${nowStr}`;
   
   let body = `Failed to check availability for ${errors.length} day${errors.length > 1 ? 's' : ''}:\n\n`;
   
-  errors.forEach(({ dayLabel, error }) => {
-    body += `📅 ${dayLabel}\n`;
+  errors.forEach(({ errorLabel, error }) => {
+    body += `📅 ${errorLabel}\n`;
     body += `   Error: ${error.type}\n`;
     body += `   Message: ${error.message}\n`;
     if (error.url) body += `   URL: ${error.url}\n`;
