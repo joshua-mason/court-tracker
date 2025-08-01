@@ -3,13 +3,15 @@
   "description": "A script to track court availability",
   "main": "build/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rollup -c",
     "deploy": "npm run build && clasp push",
     "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore ."
   },
   "type": "module",
   "devDependencies": {
     "@google/clasp": "^2.4.2",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@types/google-apps-script": "^1.0.60",
     "@types/node": "^22.7.7",
     "cross-env": "^7.0.3",
@@ -17,6 +19,8 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "prettier": "^3.0.0",
+    "rollup": "^4.46.2",
+    "rollup-plugin-cleanup": "^3.2.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {
