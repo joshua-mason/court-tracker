@@ -1,0 +1,47 @@
+{
+  "name": "court-tracker",
+  "description": "A script to track court availability",
+  "main": "build/main.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "npm run build && clasp push",
+    "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore ."
+  },
+  "type": "module",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.60",
+    "@types/node": "^22.7.7",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "moment": "^2.29.4"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ],
+      "@babel/preset-typescript"
+    ],
+    "plugins": [
+      [
+        "@babel/plugin-transform-runtime",
+        {
+          "regenerator": true
+        }
+      ]
+    ]
+  }
+}
