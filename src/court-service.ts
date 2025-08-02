@@ -104,7 +104,7 @@ export function getNextDateForDay(targetDay: string, fromDate: Date): Date {
   return date;
 }
 
-function extractAvailableSlots(
+export function extractAvailableSlots(
   html: string,
   location: CourtLocation,
   dayConfig: DayConfig,
@@ -158,7 +158,7 @@ export function normalizeTime(timeStr: string): string {
 /**
  * Checks all courts at a location for availability at a specific time
  */
-function checkCourtsAtTime(
+export function checkCourtsAtTime(
   location: CourtLocation,
   dayConfig: DayConfig, 
   dateStr: string,
