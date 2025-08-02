@@ -5,18 +5,20 @@
   "scripts": {
     "build": "rollup -c",
     "deploy": "npm run build && clasp push",
-    "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore .",
+    "lint": "eslint --fix .",
     "test": "jest",
     "test:watch": "jest --watch"
   },
   "type": "module",
   "devDependencies": {
+    "@eslint/js": "^9.32.0",
     "@google/clasp": "^2.4.2",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/google-apps-script": "^1.0.60",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.7.7",
+    "@typescript-eslint/parser": "^8.38.0",
     "cross-env": "^7.0.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",

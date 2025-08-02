@@ -1,11 +1,16 @@
-import { extractAvailableSlots, checkCourtsAtTime, normalizeTime, buildBookingUrl } from '../src/html-parser';
+import {
+  extractAvailableSlots,
+  checkCourtsAtTime,
+  normalizeTime,
+  buildBookingUrl,
+} from '../src/html-parser';
 import { CourtLocation, DayConfig } from '../src/types';
 
 // Mock Logger for GAS environment
 global.Logger = {
   log: jest.fn(),
   clear: jest.fn(),
-  getLog: jest.fn()
+  getLog: jest.fn(),
 };
 
 const mockLocation: CourtLocation = {
@@ -15,18 +20,19 @@ const mockLocation: CourtLocation = {
   path: 'test-courts',
   courts: [
     { name: 'Court 1', displayName: 'Court 1' },
-    { name: 'Court 2', displayName: 'Court 2' }
+    { name: 'Court 2', displayName: 'Court 2' },
   ],
   htmlSelectors: {
-    timeRowRegex: '<tr>\\s*<th class="time">(.+?)</th>\\s*<td class="courts">([\\s\\S]*?)</td>\\s*</tr>',
+    timeRowRegex:
+      '<tr>\\s*<th class="time">(.+?)</th>\\s*<td class="courts">([\\s\\S]*?)</td>\\s*</tr>',
     availableButtonSelector: 'button available',
-    courtNameSelector: 'Court'
-  }
+    courtNameSelector: 'Court',
+  },
 };
 
 const mockDayConfig: DayConfig = {
   day: 'monday',
-  hours: ['12pm', '1pm', '2pm']
+  hours: ['12pm', '1pm', '2pm'],
 };
 
 describe('normalizeTime', () => {
@@ -57,8 +63,8 @@ describe('buildBookingUrl', () => {
     htmlSelectors: {
       timeRowRegex: '',
       availableButtonSelector: '',
-      courtNameSelector: ''
-    }
+      courtNameSelector: '',
+    },
   };
 
   test('builds correct URL format', () => {
@@ -69,13 +75,17 @@ describe('buildBookingUrl', () => {
   test('handles different base URLs', () => {
     const location = { ...mockLocation, baseUrl: 'https://tennis.booking.com' };
     const url = buildBookingUrl(location, '2024-12-25');
-    expect(url).toBe('https://tennis.booking.com/book/courts/test-courts/2024-12-25');
+    expect(url).toBe(
+      'https://tennis.booking.com/book/courts/test-courts/2024-12-25'
+    );
   });
 
   test('handles different paths', () => {
     const location = { ...mockLocation, path: 'wimbledon-courts' };
     const url = buildBookingUrl(location, '2024-07-01');
-    expect(url).toBe('https://example.com/book/courts/wimbledon-courts/2024-07-01');
+    expect(url).toBe(
+      'https://example.com/book/courts/wimbledon-courts/2024-07-01'
+    );
   });
 });
 
@@ -88,7 +98,7 @@ describe('checkCourtsAtTime', () => {
         <button class="button unavailable">Court 2</button>
       </div>
     `;
-    
+
     const results = checkCourtsAtTime(
       mockLocation,
       mockDayConfig,
@@ -96,7 +106,7 @@ describe('checkCourtsAtTime', () => {
       '12 PM',
       tdContent
     );
-    
+
     // Both courts will match because both contain "Court 1" and "Court 2" strings
     // and the tdContent contains "button available"
     expect(results).toHaveLength(2);
@@ -111,7 +121,7 @@ describe('checkCourtsAtTime', () => {
         <button class="button available">Court 2</button>
       </div>
     `;
-    
+
     const results = checkCourtsAtTime(
       mockLocation,
       mockDayConfig,
@@ -119,7 +129,7 @@ describe('checkCourtsAtTime', () => {
       '1 PM',
       tdContent
     );
-    
+
     expect(results).toHaveLength(2);
     expect(results[0].courtName).toBe('Court 1');
     expect(results[1].courtName).toBe('Court 2');
@@ -133,7 +143,7 @@ describe('checkCourtsAtTime', () => {
         <button class="button unavailable">Court 2</button>
       </div>
     `;
-    
+
     const results = checkCourtsAtTime(
       mockLocation,
       mockDayConfig,
@@ -141,7 +151,7 @@ describe('checkCourtsAtTime', () => {
       '2 PM',
       tdContent
     );
-    
+
     expect(results).toHaveLength(0);
   });
 
@@ -153,7 +163,7 @@ describe('checkCourtsAtTime', () => {
         <span>Court 3 not mentioned in available section</span>
       </div>
     `;
-    
+
     const results = checkCourtsAtTime(
       mockLocation,
       mockDayConfig,
@@ -161,7 +171,7 @@ describe('checkCourtsAtTime', () => {
       '1 PM',
       tdContent
     );
-    
+
     expect(results).toHaveLength(1);
     expect(results[0].courtName).toBe('Court 1');
   });
@@ -209,8 +219,8 @@ describe('extractAvailableSlots', () => {
 
     // Should only include 12pm and 1pm (configured hours), skip 11am and 3pm
     expect(results).toHaveLength(4); // 2 courts at 12pm + 2 courts at 1pm
-    
-    const times = results.map(r => r.time);
+
+    const times = results.map((r) => r.time);
     expect(times).toContain('12 PM');
     expect(times).toContain('1 PM');
     expect(times).not.toContain('11 AM');

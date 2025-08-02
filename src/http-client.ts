@@ -1,21 +1,24 @@
-import { Result, CourtCheckError } from "./types";
+import { Result, CourtCheckError } from './types';
 
 /**
  * Fetches HTML content from a URL with proper error handling
  */
-export function fetchHtml(url: string, locationName: string): Result<string, CourtCheckError> {
+export function fetchHtml(
+  url: string,
+  locationName: string
+): Result<string, CourtCheckError> {
   Logger.log(`Fetching HTML from: ${url}`);
-  
+
   let html: string;
   try {
     const resp = UrlFetchApp.fetch(url, {
       muteHttpExceptions: true,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
       },
     });
-    
+
     if (resp.getResponseCode() !== 200) {
       return {
         success: false,
@@ -24,11 +27,11 @@ export function fetchHtml(url: string, locationName: string): Result<string, Cou
           message: `HTTP ${resp.getResponseCode()}`,
           url,
           statusCode: resp.getResponseCode(),
-          locationName
-        }
+          locationName,
+        },
       };
     }
-    
+
     html = resp.getContentText();
   } catch (e) {
     Logger.log(`Fetch error for ${locationName}: ${e}`);
@@ -38,8 +41,8 @@ export function fetchHtml(url: string, locationName: string): Result<string, Cou
         type: 'fetch_error',
         message: String(e),
         url,
-        locationName
-      }
+        locationName,
+      },
     };
   }
 
@@ -51,17 +54,17 @@ export function fetchHtml(url: string, locationName: string): Result<string, Cou
         type: 'html_parse_error',
         message: 'No <tr> elements found - possible HTML structure change',
         url,
-        locationName
-      }
+        locationName,
+      },
     };
   }
 
   if (html.length < 5000) {
-    Logger.log("⚠️ Warning: Fetched HTML unusually short");
+    Logger.log('⚠️ Warning: Fetched HTML unusually short');
   }
 
   return {
     success: true,
-    data: html
+    data: html,
   };
 }

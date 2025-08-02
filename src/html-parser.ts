@@ -1,17 +1,20 @@
-import { Day, DayConfig, CourtLocation } from "./types";
+import { Day, DayConfig, CourtLocation } from './types';
 
 /**
  * Normalizes time strings for consistent comparison
  * Example: "12 PM" → "12pm", " 1pm " → "1pm"
  */
 export function normalizeTime(timeStr: string): string {
-  return timeStr.toLowerCase().replace(/\s+/g, "");
+  return timeStr.toLowerCase().replace(/\s+/g, '');
 }
 
 /**
  * Builds the booking URL for a location and date
  */
-export function buildBookingUrl(location: CourtLocation, dateStr: string): string {
+export function buildBookingUrl(
+  location: CourtLocation,
+  dateStr: string
+): string {
   return `${location.baseUrl}/book/courts/${location.path}/${dateStr}`;
 }
 
@@ -30,11 +33,11 @@ export function extractAvailableSlots(
   Logger.log(
     `--- Parsing availability for ${location.name} - ${dayConfig.day} (${dateStr}) ---`
   );
-  Logger.log(`Target hours: ${targetHours.join(", ")}`);
+  Logger.log(`Target hours: ${targetHours.join(', ')}`);
 
   const rowRegex = new RegExp(location.htmlSelectors.timeRowRegex, 'gi');
   let rowMatch;
-  
+
   while ((rowMatch = rowRegex.exec(html)) !== null) {
     const timeLabel = rowMatch[1].trim();
     const timeNorm = normalizeTime(timeLabel);
@@ -48,10 +51,10 @@ export function extractAvailableSlots(
     }
 
     const slotsForTime = checkCourtsAtTime(
-      location, 
-      dayConfig, 
-      dateStr, 
-      timeLabel, 
+      location,
+      dayConfig,
+      dateStr,
+      timeLabel,
       tdContent
     );
     matches.push(...slotsForTime);
@@ -66,16 +69,16 @@ export function extractAvailableSlots(
  */
 export function checkCourtsAtTime(
   location: CourtLocation,
-  dayConfig: DayConfig, 
+  dayConfig: DayConfig,
   dateStr: string,
   timeLabel: string,
   tdContent: string
 ): Day[] {
   const matches: Day[] = [];
-  
+
   for (const court of location.courts) {
-    const isAvailable = 
-      tdContent.includes(location.htmlSelectors.availableButtonSelector) && 
+    const isAvailable =
+      tdContent.includes(location.htmlSelectors.availableButtonSelector) &&
       tdContent.includes(court.name);
 
     if (isAvailable) {
@@ -91,6 +94,6 @@ export function checkCourtsAtTime(
       Logger.log(`❌ No available ${court.displayName} at ${timeLabel}`);
     }
   }
-  
+
   return matches;
 }
