@@ -26,7 +26,7 @@ export function checkCourtAvailability() {
         allMatches.push(...result.data);
       } else {
         // Collect error instead of sending immediately
-        const errorLabel = `${location.name} - ${dayConfig.label}`;
+        const errorLabel = `${location.name} - ${dayConfig.day}`;
         errors.push({ errorLabel, error: result.error });
         Logger.log(`Error checking ${errorLabel}: ${result.error.type} - ${result.error.message}`);
       }

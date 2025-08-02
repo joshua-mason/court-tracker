@@ -6,11 +6,11 @@ export function getAvailabilityForDay(
   now: Date, 
   tz: string
 ): Result<Day[], CourtCheckError> {
-  const targetDate = getNextDateForWeekday(dayConfig.weekdayIndex, now);
+  const targetDate = getNextDateForDay(dayConfig.day, now);
   const dateStr = Utilities.formatDate(targetDate, tz, "yyyy-MM-dd");
   const url = `${location.baseUrl}/book/courts/${location.path}/${dateStr}`;
 
-  Logger.log(`Checking ${location.name} - ${dayConfig.label} (${dateStr}) at ${url}`);
+  Logger.log(`Checking ${location.name} - ${dayConfig.day} (${dateStr}) at ${url}`);
 
   let html: string;
   try {
@@ -73,11 +73,33 @@ export function getAvailabilityForDay(
   };
 }
 
-function getNextDateForWeekday(targetWeekday: number, fromDate: Date): Date {
+/**
+ * Gets the next occurrence of a specific day of the week
+ * Always returns a future date (never today, even if it matches)
+ * 
+ * Examples:
+ * - If today is Tuesday and you ask for "wednesday", returns tomorrow
+ * - If today is Tuesday and you ask for "tuesday", returns next Tuesday (in 7 days)
+ */
+function getNextDateForDay(targetDay: string, fromDate: Date): Date {
+  // JavaScript weekday indexes: Sunday=0, Monday=1, Tuesday=2, etc.
+  const dayToIndex: Record<string, number> = {
+    'sunday': 0,
+    'monday': 1, 
+    'tuesday': 2,
+    'wednesday': 3,
+    'thursday': 4,
+    'friday': 5,
+    'saturday': 6
+  };
+  
   const date = new Date(fromDate);
   const currentDay = date.getDay();
+  const targetWeekday = dayToIndex[targetDay];
+  
   let delta = (targetWeekday - currentDay + 7) % 7;
-  if (delta === 0) delta = 7; // always move forward at least 1 week
+  if (delta === 0) delta = 7; // Always move forward at least 1 week
+  
   date.setDate(date.getDate() + delta);
   return date;
 }
@@ -88,18 +110,17 @@ function extractAvailableSlots(
   dayConfig: DayConfig,
   dateStr: string
 ): Day[] {
-  const normalizeTime = (t: string) => t.toLowerCase().replace(/\s+/g, "");
   const targetHours = dayConfig.hours.map(normalizeTime);
   const matches: Day[] = [];
 
   Logger.log(
-    `--- Parsing availability for ${location.name} - ${dayConfig.label} (${dateStr}) ---`
+    `--- Parsing availability for ${location.name} - ${dayConfig.day} (${dateStr}) ---`
   );
   Logger.log(`Target hours: ${targetHours.join(", ")}`);
 
   const rowRegex = new RegExp(location.htmlSelectors.timeRowRegex, 'gi');
-
   let rowMatch;
+  
   while ((rowMatch = rowRegex.exec(html)) !== null) {
     const timeLabel = rowMatch[1].trim();
     const timeNorm = normalizeTime(timeLabel);
@@ -112,27 +133,65 @@ function extractAvailableSlots(
       continue;
     }
 
-    // Check each court at this location
-    for (const court of location.courts) {
-      const hasAvailableCourt = 
-        tdContent.includes(location.htmlSelectors.availableButtonSelector) && 
-        tdContent.includes(court.name);
-
-      if (hasAvailableCourt) {
-        matches.push({
-          dateLabel: `${dayConfig.label} (${dateStr})`,
-          time: timeLabel,
-          url: `${location.baseUrl}/book/courts/${location.path}/${dateStr}`,
-          locationName: location.name,
-          courtName: court.displayName,
-        });
-        Logger.log(`✅ Match: ${court.displayName} at ${timeLabel}`);
-      } else {
-        Logger.log(`❌ No available ${court.displayName} at ${timeLabel}`);
-      }
-    }
+    const slotsForTime = checkCourtsAtTime(
+      location, 
+      dayConfig, 
+      dateStr, 
+      timeLabel, 
+      tdContent
+    );
+    matches.push(...slotsForTime);
   }
 
   Logger.log(`Finished parsing: ${matches.length} matching slot(s) found\n`);
   return matches;
+}
+
+/**
+ * Normalizes time strings for consistent comparison
+ * Example: "12 PM" → "12pm", " 1pm " → "1pm"
+ */
+function normalizeTime(timeStr: string): string {
+  return timeStr.toLowerCase().replace(/\s+/g, "");
+}
+
+/**
+ * Checks all courts at a location for availability at a specific time
+ */
+function checkCourtsAtTime(
+  location: CourtLocation,
+  dayConfig: DayConfig, 
+  dateStr: string,
+  timeLabel: string,
+  tdContent: string
+): Day[] {
+  const matches: Day[] = [];
+  
+  for (const court of location.courts) {
+    const isAvailable = 
+      tdContent.includes(location.htmlSelectors.availableButtonSelector) && 
+      tdContent.includes(court.name);
+
+    if (isAvailable) {
+      matches.push({
+        dateLabel: `${dayConfig.day} (${dateStr})`,
+        time: timeLabel,
+        url: buildBookingUrl(location, dateStr),
+        locationName: location.name,
+        courtName: court.displayName,
+      });
+      Logger.log(`✅ Match: ${court.displayName} at ${timeLabel}`);
+    } else {
+      Logger.log(`❌ No available ${court.displayName} at ${timeLabel}`);
+    }
+  }
+  
+  return matches;
+}
+
+/**
+ * Builds the booking URL for a location and date
+ */
+function buildBookingUrl(location: CourtLocation, dateStr: string): string {
+  return `${location.baseUrl}/book/courts/${location.path}/${dateStr}`;
 }

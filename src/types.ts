@@ -7,8 +7,7 @@ export type Day = {
 };
 
 export type DayConfig = {
-  weekdayIndex: number;
-  label: string;
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
   hours: string[];
 };
 

@@ -46,18 +46,15 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
     locationId: "wapping-gardens",
     watchDays: [
       {
-        weekdayIndex: 1,
-        label: "Monday",
+        day: "monday",
         hours: ["12pm", "1pm", "2pm", "6pm", "7pm"],
       },
       {
-        weekdayIndex: 5,
-        label: "Friday",
+        day: "friday",
         hours: ["12pm", "1pm", "2pm", "5pm", "6pm", "7pm"],
       },
       {
-        weekdayIndex: 6,
-        label: "Saturday",
+        day: "saturday",
         hours: [
           "8am",
           "9am",
@@ -72,8 +69,7 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
         ],
       },
       {
-        weekdayIndex: 0,
-        label: "Sunday",
+        day: "sunday",
         hours: [
           "8am",
           "9am",
@@ -95,18 +91,15 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
     locationId: "king-edward-memorial-park",
     watchDays: [
       {
-        weekdayIndex: 1,
-        label: "Monday",
+        day: "monday",
         hours: ["12pm", "1pm", "2pm", "6pm", "7pm"],
       },
       {
-        weekdayIndex: 5,
-        label: "Friday", 
+        day: "friday", 
         hours: ["12pm", "1pm", "2pm", "5pm", "6pm", "7pm"],
       },
       {
-        weekdayIndex: 6,
-        label: "Saturday",
+        day: "saturday",
         hours: [
           "8am",
           "9am", 
@@ -121,8 +114,7 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
         ],
       },
       {
-        weekdayIndex: 0,
-        label: "Sunday",
+        day: "sunday",
         hours: [
           "8am",
           "9am",
