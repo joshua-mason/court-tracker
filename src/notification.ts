@@ -6,12 +6,14 @@ export function sendNotificationEmail(allMatches: Day[], now: Date, tz: string):
   const subject = `🎾 ${allMatches.length} free court slot${allMatches.length > 1 ? "s" : ""} found – ${nowStr}`;
   let body = `The following slots are available:\n\n`;
 
-  const grouped = groupMatchesByDay(allMatches);
+  const grouped = groupMatchesByLocationAndDay(allMatches);
 
-  for (const [dateLabel, slots] of Object.entries(grouped)) {
-    body += `📅 ${dateLabel}\n`;
+  for (const [_, slots] of Object.entries(grouped)) {
+    const firstSlot = slots[0];
+    body += `📅 ${firstSlot.locationName} - ${firstSlot.dateLabel}\n`;
+    
     slots.forEach((s: Day) => {
-      body += `• ${s.time}\n`;
+      body += `• ${s.time} (${s.courtName})\n`;
     });
     body += `→ Book: ${slots[0].url}\n\n`;
   }
@@ -52,11 +54,12 @@ export function sendErrorSummaryNotification(errors: Array<{ errorLabel: string;
 }
 
 
-function groupMatchesByDay(matches: Day[]): Record<string, Day[]> {
+function groupMatchesByLocationAndDay(matches: Day[]): Record<string, Day[]> {
   const grouped: Record<string, Day[]> = {};
   matches.forEach((m: Day) => {
-    if (!grouped[m.dateLabel]) grouped[m.dateLabel] = [];
-    grouped[m.dateLabel].push(m);
+    const key = `${m.locationName}_${m.dateLabel}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(m);
   });
   return grouped;
 }

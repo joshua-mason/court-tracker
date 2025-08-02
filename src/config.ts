@@ -17,6 +17,27 @@ export const COURT_LOCATIONS: CourtLocation[] = [
       availableButtonSelector: "button available",
       courtNameSelector: "Court 1"
     }
+  },
+  {
+    id: "king-edward-memorial-park",
+    name: "King Edward Memorial Park",
+    baseUrl: "https://tennistowerhamlets.com",
+    path: "king-edward-memorial-park",
+    courts: [
+      {
+        name: "Court 1",
+        displayName: "Court 1"
+      },
+      {
+        name: "Court 2", 
+        displayName: "Court 2"
+      }
+    ],
+    htmlSelectors: {
+      timeRowRegex: '<tr>\\s*<th class="time">(.+?)</th>\\s*<td class="courts">([\\s\\S]*?)</td>\\s*</tr>',
+      availableButtonSelector: "button available",
+      courtNameSelector: "Court"
+    }
   }
 ];
 
@@ -57,6 +78,55 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
           "8am",
           "9am",
           "10am",
+          "11am",
+          "12pm",
+          "1pm",
+          "2pm",
+          "3pm",
+          "4pm",
+          "5pm",
+          "6pm",
+          "7pm",
+        ],
+      },
+    ],
+  },
+  {
+    locationId: "king-edward-memorial-park",
+    watchDays: [
+      {
+        weekdayIndex: 1,
+        label: "Monday",
+        hours: ["12pm", "1pm", "2pm", "6pm", "7pm"],
+      },
+      {
+        weekdayIndex: 5,
+        label: "Friday", 
+        hours: ["12pm", "1pm", "2pm", "5pm", "6pm", "7pm"],
+      },
+      {
+        weekdayIndex: 6,
+        label: "Saturday",
+        hours: [
+          "8am",
+          "9am", 
+          "10am",
+          "11am",
+          "12pm",
+          "1pm",
+          "2pm",
+          "3pm",
+          "4pm",
+          "5pm",
+        ],
+      },
+      {
+        weekdayIndex: 0,
+        label: "Sunday",
+        hours: [
+          "8am",
+          "9am",
+          "10am", 
           "11am",
           "12pm",
           "1pm",
