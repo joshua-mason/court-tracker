@@ -5,7 +5,10 @@
   "scripts": {
     "build": "rollup -c",
     "deploy": "npm run build && clasp push",
-    "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore ."
+    "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore .",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "type": "module",
   "devDependencies": {
@@ -13,14 +16,17 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/google-apps-script": "^1.0.60",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.7.7",
     "cross-env": "^7.0.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "jest": "^30.0.5",
     "prettier": "^3.0.0",
     "rollup": "^4.46.2",
     "rollup-plugin-cleanup": "^3.2.1",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.7.3"
   },
   "dependencies": {

@@ -81,7 +81,7 @@ export function getAvailabilityForDay(
  * - If today is Tuesday and you ask for "wednesday", returns tomorrow
  * - If today is Tuesday and you ask for "tuesday", returns next Tuesday (in 7 days)
  */
-function getNextDateForDay(targetDay: string, fromDate: Date): Date {
+export function getNextDateForDay(targetDay: string, fromDate: Date): Date {
   // JavaScript weekday indexes: Sunday=0, Monday=1, Tuesday=2, etc.
   const dayToIndex: Record<string, number> = {
     'sunday': 0,
@@ -151,7 +151,7 @@ function extractAvailableSlots(
  * Normalizes time strings for consistent comparison
  * Example: "12 PM" → "12pm", " 1pm " → "1pm"
  */
-function normalizeTime(timeStr: string): string {
+export function normalizeTime(timeStr: string): string {
   return timeStr.toLowerCase().replace(/\s+/g, "");
 }
 
@@ -192,6 +192,6 @@ function checkCourtsAtTime(
 /**
  * Builds the booking URL for a location and date
  */
-function buildBookingUrl(location: CourtLocation, dateStr: string): string {
+export function buildBookingUrl(location: CourtLocation, dateStr: string): string {
   return `${location.baseUrl}/book/courts/${location.path}/${dateStr}`;
 }
