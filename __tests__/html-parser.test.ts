@@ -1,4 +1,4 @@
-import { extractAvailableSlots, checkCourtsAtTime } from '../src/court-service';
+import { extractAvailableSlots, checkCourtsAtTime, normalizeTime, buildBookingUrl } from '../src/html-parser';
 import { CourtLocation, DayConfig } from '../src/types';
 
 // Mock Logger for GAS environment
@@ -28,6 +28,56 @@ const mockDayConfig: DayConfig = {
   day: 'monday',
   hours: ['12pm', '1pm', '2pm']
 };
+
+describe('normalizeTime', () => {
+  test('converts uppercase to lowercase', () => {
+    expect(normalizeTime('12 PM')).toBe('12pm');
+    expect(normalizeTime('1 AM')).toBe('1am');
+  });
+
+  test('removes whitespace', () => {
+    expect(normalizeTime(' 1pm ')).toBe('1pm');
+    expect(normalizeTime('12 pm')).toBe('12pm');
+    expect(normalizeTime('  2  pm  ')).toBe('2pm');
+  });
+
+  test('handles mixed case and spacing', () => {
+    expect(normalizeTime(' 3 PM ')).toBe('3pm');
+    expect(normalizeTime('11 Am')).toBe('11am');
+  });
+});
+
+describe('buildBookingUrl', () => {
+  const mockLocation: CourtLocation = {
+    id: 'test-location',
+    name: 'Test Location',
+    baseUrl: 'https://example.com',
+    path: 'test-courts',
+    courts: [],
+    htmlSelectors: {
+      timeRowRegex: '',
+      availableButtonSelector: '',
+      courtNameSelector: ''
+    }
+  };
+
+  test('builds correct URL format', () => {
+    const url = buildBookingUrl(mockLocation, '2024-02-06');
+    expect(url).toBe('https://example.com/book/courts/test-courts/2024-02-06');
+  });
+
+  test('handles different base URLs', () => {
+    const location = { ...mockLocation, baseUrl: 'https://tennis.booking.com' };
+    const url = buildBookingUrl(location, '2024-12-25');
+    expect(url).toBe('https://tennis.booking.com/book/courts/test-courts/2024-12-25');
+  });
+
+  test('handles different paths', () => {
+    const location = { ...mockLocation, path: 'wimbledon-courts' };
+    const url = buildBookingUrl(location, '2024-07-01');
+    expect(url).toBe('https://example.com/book/courts/wimbledon-courts/2024-07-01');
+  });
+});
 
 describe('checkCourtsAtTime', () => {
   test('identifies available courts', () => {

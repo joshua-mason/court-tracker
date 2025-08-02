@@ -1,6 +1,8 @@
 import { COURT_LOCATIONS, LOCATION_SCHEDULES } from "./config";
 import { Day, CourtCheckError } from "./types";
-import { getAvailabilityForDay } from "./court-service";
+import { getNextDateForDay } from "./utils";
+import { buildBookingUrl, extractAvailableSlots } from "./html-parser";
+import { fetchHtml } from "./http-client";
 import { sendNotificationEmail, sendErrorSummaryNotification } from "./notification";
 
 // Entry point for the hourly trigger
@@ -20,16 +22,26 @@ export function checkCourtAvailability() {
     }
 
     schedule.watchDays.forEach((dayConfig) => {
-      const result = getAvailabilityForDay(location, dayConfig, now, tz);
+      // Step 1: Calculate date and build URL
+      const targetDate = getNextDateForDay(dayConfig.day, now);
+      const dateStr = Utilities.formatDate(targetDate, tz, "yyyy-MM-dd");
+      const url = buildBookingUrl(location, dateStr);
       
-      if (result.success) {
-        allMatches.push(...result.data);
-      } else {
-        // Collect error instead of sending immediately
+      Logger.log(`Checking ${location.name} - ${dayConfig.day} (${dateStr}) at ${url}`);
+      
+      // Step 2: Fetch HTML
+      const htmlResult = fetchHtml(url, location.name);
+      
+      if (!htmlResult.success) {
         const errorLabel = `${location.name} - ${dayConfig.day}`;
-        errors.push({ errorLabel, error: result.error });
-        Logger.log(`Error checking ${errorLabel}: ${result.error.type} - ${result.error.message}`);
+        errors.push({ errorLabel, error: htmlResult.error });
+        Logger.log(`Error checking ${errorLabel}: ${htmlResult.error.type} - ${htmlResult.error.message}`);
+        return;
       }
+      
+      // Step 3: Parse HTML to extract available slots
+      const slots = extractAvailableSlots(htmlResult.data, location, dayConfig, dateStr);
+      allMatches.push(...slots);
     });
   });
 
