@@ -7,6 +7,7 @@ import {
   sendNotificationEmail,
   sendErrorSummaryNotification,
 } from './notification';
+import { hasResultsChanged, updateState, getStateSummary } from './store';
 
 // Entry point for the hourly trigger
 export function checkCourtAvailability() {
@@ -61,12 +62,25 @@ export function checkCourtAvailability() {
     });
   });
 
-  // Send notifications
-  if (allMatches.length > 0) {
+  // Log current state for debugging
+  Logger.log(`${getStateSummary()}`);
+
+  // Check if results have changed and send notifications accordingly
+  const resultsChanged = hasResultsChanged(allMatches);
+  let notificationSent = false;
+
+  if (allMatches.length > 0 && resultsChanged) {
     sendNotificationEmail(allMatches, now, tz);
+    notificationSent = true;
+    Logger.log('✅ Notification sent - results changed');
+  } else if (allMatches.length > 0 && !resultsChanged) {
+    Logger.log('🔄 Slots found but unchanged - no notification sent');
   } else {
-    Logger.log('No matching slots found for any configured location/day');
+    Logger.log('❌ No matching slots found for any configured location/day');
   }
+
+  // Update state with current results
+  updateState(allMatches, notificationSent);
 
   // Send single error summary if there were any errors
   if (errors.length > 0) {
