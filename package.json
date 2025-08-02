@@ -7,8 +7,7 @@
     "deploy": "npm run build && clasp push",
     "lint": "eslint --fix --ext .ts,.js --ignore-path .gitignore .",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:watch": "jest --watch"
   },
   "type": "module",
   "devDependencies": {
