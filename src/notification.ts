@@ -1,31 +1,17 @@
 import { CONFIG } from './config';
 import { Day, CourtCheckError } from './types';
+import { generateHtmlEmail } from './html-renderer';
 
-export function sendNotificationEmail(
-  allMatches: Day[],
-  now: Date,
-  tz: string
-): void {
-  const nowStr = Utilities.formatDate(now, tz, 'EEE dd MMM yyyy HH:mm');
-  const subject = `🎾 ${allMatches.length} free court slot${allMatches.length > 1 ? 's' : ''} found – ${nowStr}`;
-  let body = `The following slots are available:\n\n`;
+export function sendNotificationEmail(allMatches: Day[]): void {
+  const dateRange = getDateRange(allMatches);
+  const subject = `🎾 Tennis slots available • ${dateRange} • ${allMatches.length} courts found`;
 
-  const grouped = groupMatchesByLocationAndDay(allMatches);
-
-  for (const slots of Object.values(grouped)) {
-    const firstSlot = slots[0];
-    body += `📅 ${firstSlot.locationName} - ${firstSlot.dateLabel}\n`;
-
-    slots.forEach((s: Day) => {
-      body += `• ${s.time} (${s.courtName})\n`;
-    });
-    body += `→ Book: ${slots[0].url}\n\n`;
-  }
+  const htmlBody = generateHtmlEmail(allMatches);
 
   MailApp.sendEmail({
     to: CONFIG.notificationEmail,
     subject,
-    body,
+    htmlBody,
   });
 
   Logger.log(`Sent 1 email with ${allMatches.length} slot(s)`);
@@ -61,12 +47,27 @@ export function sendErrorSummaryNotification(
   Logger.log(`Sent error summary for ${errors.length} failed checks`);
 }
 
-function groupMatchesByLocationAndDay(matches: Day[]): Record<string, Day[]> {
-  const grouped: Record<string, Day[]> = {};
-  matches.forEach((m: Day) => {
-    const key = `${m.locationName}_${m.dateLabel}`;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(m);
+function getDateRange(matches: Day[]): string {
+  if (matches.length === 0) return '';
+
+  const dates = matches.map((m) => {
+    const match = m.dateLabel.match(/\((\d{4})-(\d{2})-(\d{2})\)/);
+    return match
+      ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
+      : new Date();
   });
-  return grouped;
+
+  const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
+  const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
+
+  const formatDate = (date: Date) => {
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    return `${month} ${date.getDate()}`;
+  };
+
+  if (minDate.getTime() === maxDate.getTime()) {
+    return formatDate(minDate);
+  } else {
+    return `${formatDate(minDate)}-${formatDate(maxDate)}`;
+  }
 }

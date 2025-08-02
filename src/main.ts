@@ -70,7 +70,7 @@ export function checkCourtAvailability() {
   let notificationSent = false;
 
   if (allMatches.length > 0 && resultsChanged) {
-    sendNotificationEmail(allMatches, now, tz);
+    sendNotificationEmail(allMatches);
     notificationSent = true;
     Logger.log('✅ Notification sent - results changed');
   } else if (allMatches.length > 0 && !resultsChanged) {
