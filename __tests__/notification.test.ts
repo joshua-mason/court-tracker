@@ -3,24 +3,24 @@ import { Day } from '../src/types';
 
 // Mock GAS services
 global.MailApp = {
-  sendEmail: jest.fn()
+  sendEmail: jest.fn(),
 } as any;
 
 global.Logger = {
   log: jest.fn(),
   clear: jest.fn(),
-  getLog: jest.fn()
+  getLog: jest.fn(),
 };
 
 global.Utilities = {
-  formatDate: jest.fn(() => 'Thu 06 Feb 2024 14:30')
+  formatDate: jest.fn(() => 'Thu 06 Feb 2024 14:30'),
 } as any;
 
 // Mock the config import
 jest.mock('../src/config', () => ({
   CONFIG: {
-    notificationEmail: 'test@example.com'
-  }
+    notificationEmail: 'test@example.com',
+  },
 }));
 
 const createMockDay = (overrides: Partial<Day> = {}): Day => ({
@@ -29,7 +29,7 @@ const createMockDay = (overrides: Partial<Day> = {}): Day => ({
   url: 'https://tennistowerhamlets.com/book/courts/wapping-gardens/2024-02-06',
   locationName: 'Wapping Gardens Tennis Courts',
   courtName: 'Court 1',
-  ...overrides
+  ...overrides,
 });
 
 describe('sendNotificationEmail', () => {
@@ -45,7 +45,7 @@ describe('sendNotificationEmail', () => {
     expect(global.MailApp.sendEmail).toHaveBeenCalledWith({
       to: 'test@example.com',
       subject: '🎾 Tennis slots available • Feb 6 • 1 courts found',
-      htmlBody: expect.stringContaining('<div style=')
+      htmlBody: expect.stringContaining('<table'),
     });
 
     const emailCall = (global.MailApp.sendEmail as jest.Mock).mock.calls[0][0];
@@ -61,7 +61,7 @@ describe('sendNotificationEmail', () => {
   test('formats multiple courts at same location correctly', () => {
     const matches = [
       createMockDay({ time: '12 PM', courtName: 'Court 1' }),
-      createMockDay({ time: '1 PM', courtName: 'Court 2' })
+      createMockDay({ time: '1 PM', courtName: 'Court 2' }),
     ];
 
     sendNotificationEmail(matches);
@@ -78,12 +78,12 @@ describe('sendNotificationEmail', () => {
     const matches = [
       createMockDay({
         locationName: 'Wapping Gardens Tennis Courts',
-        url: 'https://tennistowerhamlets.com/book/courts/wapping-gardens/2024-02-06'
+        url: 'https://tennistowerhamlets.com/book/courts/wapping-gardens/2024-02-06',
       }),
       createMockDay({
         locationName: 'King Edward Memorial Park',
-        url: 'https://tennistowerhamlets.com/book/courts/king-edward-memorial-park/2024-02-06'
-      })
+        url: 'https://tennistowerhamlets.com/book/courts/king-edward-memorial-park/2024-02-06',
+      }),
     ];
 
     sendNotificationEmail(matches);
@@ -100,13 +100,15 @@ describe('sendNotificationEmail', () => {
   test('formats date range correctly in subject', () => {
     const matches = [
       createMockDay({ dateLabel: 'monday (2024-02-06)' }),
-      createMockDay({ dateLabel: 'friday (2024-02-09)' })
+      createMockDay({ dateLabel: 'friday (2024-02-09)' }),
     ];
 
     sendNotificationEmail(matches);
 
     const emailCall = (global.MailApp.sendEmail as jest.Mock).mock.calls[0][0];
-    expect(emailCall.subject).toBe('🎾 Tennis slots available • Feb 6-Feb 9 • 2 courts found');
+    expect(emailCall.subject).toBe(
+      '🎾 Tennis slots available • Feb 6-Feb 9 • 2 courts found'
+    );
   });
 
   test('logs successful email send', () => {
@@ -114,6 +116,8 @@ describe('sendNotificationEmail', () => {
 
     sendNotificationEmail(matches);
 
-    expect(global.Logger.log).toHaveBeenCalledWith('Sent 1 email with 1 slot(s)');
+    expect(global.Logger.log).toHaveBeenCalledWith(
+      'Sent 1 email with 1 slot(s)'
+    );
   });
 });

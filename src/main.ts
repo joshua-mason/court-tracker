@@ -8,6 +8,7 @@ import {
   sendErrorSummaryNotification,
 } from './notification';
 import { hasResultsChanged, updateState, getStateSummary } from './store';
+import { generateHtmlEmail } from './html-renderer';
 
 // Entry point for the hourly trigger
 export function checkCourtAvailability() {
@@ -87,3 +88,6 @@ export function checkCourtAvailability() {
     sendErrorSummaryNotification(errors, now, tz);
   }
 }
+
+// Export for preview script
+export { generateHtmlEmail };

@@ -23,21 +23,25 @@ export function generateHtmlEmail(allMatches: Day[]): string {
   const grouped = groupMatchesByLocationAndDay(allMatches);
 
   let html = `
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tennis Court Availability</title>
 </head>
-<body>
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:linear-gradient(135deg, #f8fffe 0%, #f0f8f0 100%)">
-        <div style="text-align:center;margin-bottom:16px">
-            <h2 style="margin:0;color:#2E7D32;font-size:16px;font-weight:500">
-                🎾 Court Availability
-            </h2>
-        </div>
-  `;
+<body style="margin:0;padding:0;background-color:#f0f8f0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f8f0;">
+        <tr>
+            <td align="center" style="padding:20px;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#f0f8f0;">
+                    <tr>
+                        <td style="text-align:center;padding-bottom:20px;">
+                            <h2 style="margin:0;color:#2E7D32;font-size:18px;font-weight:normal;font-family:Arial,sans-serif;">
+                                🎾 Court Availability
+                            </h2>
+                        </td>
+                    </tr>`;
 
   let themeIndex = 0;
   for (const slots of Object.values(grouped)) {
@@ -50,10 +54,15 @@ export function generateHtmlEmail(allMatches: Day[]): string {
   }
 
   html += `
-        <div style="text-align:center;color:#777;font-size:13px;margin-top:24px;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;backdrop-filter:blur(10px)">
-            🎾 Available now • Tap to reserve your spot on the court
-        </div>
-    </div>
+                    <tr>
+                        <td style="text-align:center;color:#777;font-size:13px;padding-top:20px;padding:16px;background-color:#ffffff;border-radius:8px;">
+                            🎾 Available now • Tap to reserve your spot on the court
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
   `;
@@ -67,59 +76,94 @@ function renderLocationCard(
   theme: LocationTheme
 ): string {
   const slotsByDate = groupSlotsByDate(slots);
-  const shadowColor =
-    theme.primary === '#2E7D32'
-      ? 'rgba(46,125,50,0.08)'
-      : 'rgba(210,105,30,0.08)';
+  const bookingUrl = `https://tennistowerhamlets.com/book/courts/${getShortUrl(slots[0].url)}`;
 
   let card = `
-        <div style="margin-bottom:20px;padding:20px;background:white;border-radius:16px;box-shadow:0 3px 10px ${shadowColor};border-top:3px solid ${theme.borderColor}">
-            <h3 style="margin:0 0 12px 0;color:${theme.primary};font-size:17px;font-weight:500;display:flex;align-items:center;gap:8px">
-                🏟️ ${locationName}
-            </h3>
-  `;
+                    <tr>
+                        <td style="padding-bottom:20px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border:3px solid ${theme.borderColor};border-radius:12px;">
+                                <tr>
+                                    <td style="padding:20px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding-bottom:12px;">
+                                                    <h3 style="margin:0;color:${theme.primary};font-size:17px;font-weight:normal;font-family:Arial,sans-serif;">
+                                                        🏟️ ${locationName}
+                                                    </h3>
+                                                </td>
+                                            </tr>`;
 
   for (const [dateLabel, dateSlots] of Object.entries(slotsByDate)) {
     const formattedDate = formatDateLabel(dateLabel);
     const timeSlots = renderTimeSlots(dateSlots, theme);
 
     card += `
-            <div style="margin-bottom:12px;display:flex;align-items:center;flex-wrap:wrap;gap:8px">
-                <span style="font-weight:600;color:#444;background:#f5f5f5;padding:6px 10px;border-radius:8px;font-size:14px">
-                    ${formattedDate}
-                </span>
-                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                    ${timeSlots}
-                </div>
-            </div>
-    `;
+                                            <tr>
+                                                <td style="padding-bottom:12px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="padding:6px 10px;background-color:#f5f5f5;border-radius:6px;font-size:14px;font-weight:600;color:#444;font-family:Arial,sans-serif;width:80px;">
+                                                                ${formattedDate}
+                                                            </td>
+                                                            <td style="padding-left:10px;">
+                                                                ${timeSlots}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>`;
   }
 
-  const bookingUrl = `https://tennistowerhamlets.com/book/courts/${getShortUrl(slots[0].url)}`;
   card += `
-            <div style="margin-top:16px">
-                <a href="${bookingUrl}" style="color:${theme.primary};text-decoration:none;font-weight:500;background:${theme.background};padding:8px 16px;border-radius:20px;font-size:14px;display:inline-block;transition:all 0.2s" target="_blank">
-                    Book Court →
-                </a>
-            </div>
-        </div>
-  `;
+                                            <tr>
+                                                <td style="padding-top:16px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="background-color:${theme.background};border:2px solid ${theme.borderColor};border-radius:20px;">
+                                                                <a href="${bookingUrl}" style="color:${theme.primary};text-decoration:none;font-weight:500;padding:8px 16px;font-size:14px;font-family:Arial,sans-serif;display:block;" target="_blank">
+                                                                    Book Court →
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>`;
 
   return card;
 }
 
 function renderTimeSlots(slots: Day[], theme: LocationTheme): string {
-  return slots
-    .map((slot) => {
-      const time = slot.time.toLowerCase();
-      const courtInfo =
-        slots.length > 1 && slot.courtName !== 'Court 1'
-          ? ` (${slot.courtName})`
-          : '';
+  const timeSlotElements = slots.map((slot) => {
+    const time = slot.time.toLowerCase();
+    const courtInfo =
+      slots.length > 1 && slot.courtName !== 'Court 1'
+        ? ` (${slot.courtName})`
+        : '';
 
-      return `<span style="background:${theme.background};color:${theme.primary};padding:6px 10px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid ${theme.borderColor}"><strong>${time}</strong>${courtInfo} 🎾</span>`;
-    })
-    .join('');
+    return `
+                                                                <td style="padding-right:6px;padding-bottom:4px;">
+                                                                    <table cellpadding="0" cellspacing="0" border="0">
+                                                                        <tr>
+                                                                            <td style="background-color:${theme.background};color:${theme.primary};padding:6px 10px;border-radius:16px;font-size:13px;font-weight:500;border:1px solid ${theme.borderColor};font-family:Arial,sans-serif;">
+                                                                                <strong>${time}</strong>${courtInfo} 🎾
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </td>`;
+  });
+
+  return `
+                                                                <table cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        ${timeSlotElements.join('')}
+                                                                    </tr>
+                                                                </table>`;
 }
 
 function getShortLocationName(locationName: string): string {

@@ -7,7 +7,8 @@
     "deploy": "npm run build && clasp push",
     "lint": "eslint --fix .",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "preview": "tsc scripts/preview-email.ts --target es2020 --module commonjs --skipLibCheck --outDir ./temp && mv temp/scripts/preview-email.js temp/preview-email.cjs && node temp/preview-email.cjs && rm -rf temp"
   },
   "type": "module",
   "devDependencies": {
