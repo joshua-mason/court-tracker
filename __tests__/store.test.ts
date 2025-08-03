@@ -104,6 +104,8 @@ describe('loadState', () => {
     expect(state).toEqual({
       lastResultsHash: '',
       lastNotificationTime: 0,
+      storedErrors: [],
+      lastErrorSummaryTime: 0,
     });
   });
 
@@ -115,7 +117,12 @@ describe('loadState', () => {
     mockGetProperty.mockReturnValue(JSON.stringify(storedState));
 
     const state = loadState();
-    expect(state).toEqual(storedState);
+    expect(state).toEqual({
+      lastResultsHash: 'abc123',
+      lastNotificationTime: 1234567890,
+      storedErrors: [],
+      lastErrorSummaryTime: 0,
+    });
   });
 
   test('returns default state when stored data is invalid JSON', () => {
@@ -125,6 +132,8 @@ describe('loadState', () => {
     expect(state).toEqual({
       lastResultsHash: '',
       lastNotificationTime: 0,
+      storedErrors: [],
+      lastErrorSummaryTime: 0,
     });
   });
 });

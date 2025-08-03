@@ -20,7 +20,7 @@ const THEMES: LocationTheme[] = [
 ];
 
 export function generateHtmlEmail(allMatches: Day[]): string {
-  const grouped = groupMatchesByLocationAndDay(allMatches);
+  const grouped = groupMatchesByLocation(allMatches);
 
   let html = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -193,10 +193,10 @@ function getShortUrl(url: string): string {
   return match ? match[1] : url;
 }
 
-function groupMatchesByLocationAndDay(matches: Day[]): Record<string, Day[]> {
+function groupMatchesByLocation(matches: Day[]): Record<string, Day[]> {
   const grouped: Record<string, Day[]> = {};
   matches.forEach((m: Day) => {
-    const key = `${m.locationName}_${m.dateLabel}`;
+    const key = m.locationName;
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(m);
   });

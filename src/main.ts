@@ -5,9 +5,16 @@ import { buildBookingUrl, extractAvailableSlots } from './html-parser';
 import { fetchHtml } from './http-client';
 import {
   sendNotificationEmail,
-  sendErrorSummaryNotification,
+  sendWeeklyErrorSummaryNotification,
 } from './notification';
-import { hasResultsChanged, updateState, getStateSummary } from './store';
+import {
+  hasResultsChanged,
+  updateState,
+  getStateSummary,
+  storeErrors,
+  shouldSendErrorSummary,
+  getAndClearStoredErrors,
+} from './store';
 import { generateHtmlEmail } from './html-renderer';
 
 // Entry point for the hourly trigger
@@ -83,9 +90,21 @@ export function checkCourtAvailability() {
   // Update state with current results
   updateState(allMatches, notificationSent);
 
-  // Send single error summary if there were any errors
+  // Store errors for weekly summary instead of sending immediately
   if (errors.length > 0) {
-    sendErrorSummaryNotification(errors, now, tz);
+    storeErrors(errors);
+    Logger.log(`Stored ${errors.length} errors for weekly summary`);
+  }
+
+  // Check if we should send weekly error summary
+  if (shouldSendErrorSummary()) {
+    const storedErrors = getAndClearStoredErrors();
+    Logger.log(
+      `Sending weekly error summary with ${storedErrors.length} total errors`
+    );
+
+    // Send weekly error summary with timestamps
+    sendWeeklyErrorSummaryNotification(storedErrors, now, tz);
   }
 }
 

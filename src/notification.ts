@@ -17,26 +17,51 @@ export function sendNotificationEmail(allMatches: Day[]): void {
   Logger.log(`Sent 1 email with ${allMatches.length} slot(s)`);
 }
 
-export function sendErrorSummaryNotification(
-  errors: Array<{ errorLabel: string; error: CourtCheckError }>,
+export function sendWeeklyErrorSummaryNotification(
+  errors: Array<{
+    errorLabel: string;
+    error: CourtCheckError;
+    timestamp: number;
+  }>,
   now: Date,
   tz: string
 ): void {
   const nowStr = Utilities.formatDate(now, tz, 'EEE dd MMM yyyy HH:mm');
-  const subject = `❌ Court-watch: ${errors.length} Error${errors.length > 1 ? 's' : ''} – ${nowStr}`;
+  const subject = `📅 Weekly Court-watch Error Summary: ${errors.length} Error${errors.length > 1 ? 's' : ''} – ${nowStr}`;
 
-  let body = `Failed to check availability for ${errors.length} day${errors.length > 1 ? 's' : ''}:\n\n`;
+  const groupedByDate = new Map<
+    string,
+    Array<{ errorLabel: string; error: CourtCheckError }>
+  >();
 
-  errors.forEach(({ errorLabel, error }) => {
-    body += `📅 ${errorLabel}\n`;
-    body += `   Error: ${error.type}\n`;
-    body += `   Message: ${error.message}\n`;
-    if (error.url) body += `   URL: ${error.url}\n`;
-    if (error.statusCode) body += `   Status: ${error.statusCode}\n`;
-    body += '\n';
+  // Group errors by date
+  errors.forEach(({ errorLabel, error, timestamp }) => {
+    const date = Utilities.formatDate(
+      new Date(timestamp),
+      tz,
+      'EEE dd MMM yyyy'
+    );
+    if (!groupedByDate.has(date)) {
+      groupedByDate.set(date, []);
+    }
+    groupedByDate.get(date)!.push({ errorLabel, error });
   });
 
-  body += 'The system will retry on the next scheduled run.';
+  let body = `Weekly error summary covering ${errors.length} failed check${errors.length > 1 ? 's' : ''} across ${groupedByDate.size} day${groupedByDate.size > 1 ? 's' : ''}:\n\n`;
+
+  for (const [date, dayErrors] of groupedByDate.entries()) {
+    body += `📅 ${date} (${dayErrors.length} error${dayErrors.length > 1 ? 's' : ''})\n`;
+    dayErrors.forEach(({ errorLabel, error }) => {
+      body += `   • ${errorLabel}: ${error.type}\n`;
+      if (error.message !== error.type) {
+        body += `     ${error.message}\n`;
+      }
+    });
+    body += '\n';
+  }
+
+  body +=
+    'These errors have been cleared from the system. Monitoring continues normally.';
 
   MailApp.sendEmail({
     to: CONFIG.notificationEmail,
@@ -44,7 +69,9 @@ export function sendErrorSummaryNotification(
     body,
   });
 
-  Logger.log(`Sent error summary for ${errors.length} failed checks`);
+  Logger.log(
+    `Sent weekly error summary for ${errors.length} failed checks across ${groupedByDate.size} days`
+  );
 }
 
 function getDateRange(matches: Day[]): string {
