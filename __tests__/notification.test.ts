@@ -55,7 +55,9 @@ describe('sendNotificationEmail', () => {
     expect(htmlBody).toContain('🏟️ Wapping Gardens');
     expect(htmlBody).toContain('Mon Feb 6');
     expect(htmlBody).toContain('12 pm');
-    expect(htmlBody).toContain('Book Court →');
+    expect(htmlBody).toContain(
+      'href="https://tennistowerhamlets.com/book/courts/wapping-gardens/2024-02-06"'
+    );
   });
 
   test('formats multiple courts at same location correctly', () => {

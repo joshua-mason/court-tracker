@@ -76,7 +76,6 @@ function renderLocationCard(
   theme: LocationTheme
 ): string {
   const slotsByDate = groupSlotsByDate(slots);
-  const bookingUrl = `https://tennistowerhamlets.com/book/courts/${getShortUrl(slots[0].url)}`;
 
   let card = `
                     <tr>
@@ -174,12 +173,6 @@ function formatDateLabel(dateLabel: string): string {
   const dayNum = parseInt(day);
 
   return `${shortDay} ${monthName} ${dayNum}`;
-}
-
-function getShortUrl(url: string): string {
-  // Extract the meaningful part: "wapping-gardens/2024-02-06"
-  const match = url.match(/\/book\/courts\/(.+)$/);
-  return match ? match[1] : url;
 }
 
 function groupMatchesByLocation(matches: Day[]): Record<string, Day[]> {
