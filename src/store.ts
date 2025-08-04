@@ -49,7 +49,7 @@ export function loadState(): StoreState {
 
   try {
     const parsed = JSON.parse(stored);
-    
+
     // Migration: handle old state format without new fields
     return {
       lastResultsHash: parsed.lastResultsHash || '',

@@ -115,19 +115,6 @@ function renderLocationCard(
   }
 
   card += `
-                                            <tr>
-                                                <td style="padding-top:16px;">
-                                                    <table cellpadding="0" cellspacing="0" border="0">
-                                                        <tr>
-                                                            <td style="background-color:${theme.background};border:2px solid ${theme.borderColor};border-radius:20px;">
-                                                                <a href="${bookingUrl}" style="color:${theme.primary};text-decoration:none;font-weight:500;padding:8px 16px;font-size:14px;font-family:Arial,sans-serif;display:block;" target="_blank">
-                                                                    Book Court →
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
                                         </table>
                                     </td>
                                 </tr>
@@ -151,7 +138,9 @@ function renderTimeSlots(slots: Day[], theme: LocationTheme): string {
                                                                     <table cellpadding="0" cellspacing="0" border="0">
                                                                         <tr>
                                                                             <td style="background-color:${theme.background};color:${theme.primary};padding:6px 10px;border-radius:16px;font-size:13px;font-weight:500;border:1px solid ${theme.borderColor};font-family:Arial,sans-serif;">
-                                                                                <strong>${time}</strong>${courtInfo} 🎾
+                                                                                <a href="${slot.url}" style="color:${theme.primary};text-decoration:none;display:block;" target="_blank">
+                                                                                    <strong>${time}</strong>${courtInfo} 🎾
+                                                                                </a>
                                                                             </td>
                                                                         </tr>
                                                                     </table>
