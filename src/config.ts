@@ -53,7 +53,7 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
       },
       {
         day: 'wednesday',
-        hours: ['12pm', '1pm', '6pm', '7pm', '8pm'],
+        hours: ['6pm', '7pm', '8pm'],
       },
       {
         day: 'thursday',
