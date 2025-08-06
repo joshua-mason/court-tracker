@@ -38,35 +38,52 @@ export function checkCourtAvailability() {
     }
 
     schedule.watchDays.forEach((dayConfig) => {
-      // Step 1: Calculate date and build URL
-      const targetDate = getNextDateForDay(dayConfig.day, now);
-      const dateStr = Utilities.formatDate(targetDate, tz, 'yyyy-MM-dd');
-      const url = buildBookingUrl(location, dateStr);
+      // Generate dates to check: today (if matches) + next week's occurrence
+      const datesToCheck: Date[] = [];
 
-      Logger.log(
-        `Checking ${location.name} - ${dayConfig.day} (${dateStr}) at ${url}`
-      );
-
-      // Step 2: Fetch HTML
-      const htmlResult = fetchHtml(url, location.name);
-
-      if (!htmlResult.success) {
-        const errorLabel = `${location.name} - ${dayConfig.day}`;
-        errors.push({ errorLabel, error: htmlResult.error });
-        Logger.log(
-          `Error checking ${errorLabel}: ${htmlResult.error.type} - ${htmlResult.error.message}`
-        );
-        return;
+      // Always check next week's occurrence
+      const nextWeekDate = getNextDateForDay(dayConfig.day, now);
+      if (nextWeekDate.toDateString() === now.toDateString()) {
+        // If "next" date is today, also check next week
+        datesToCheck.push(nextWeekDate); // Today
+        const actualNextWeek = new Date(nextWeekDate);
+        actualNextWeek.setDate(actualNextWeek.getDate() + 7);
+        datesToCheck.push(actualNextWeek); // Next week
+      } else {
+        // Normal case - just next occurrence
+        datesToCheck.push(nextWeekDate);
       }
 
-      // Step 3: Parse HTML to extract available slots
-      const slots = extractAvailableSlots(
-        htmlResult.data,
-        location,
-        dayConfig,
-        dateStr
-      );
-      allMatches.push(...slots);
+      datesToCheck.forEach((targetDate) => {
+        // Step 1: Calculate date and build URL
+        const dateStr = Utilities.formatDate(targetDate, tz, 'yyyy-MM-dd');
+        const url = buildBookingUrl(location, dateStr);
+
+        Logger.log(
+          `Checking ${location.name} - ${dayConfig.day} (${dateStr}) at ${url}`
+        );
+
+        // Step 2: Fetch HTML
+        const htmlResult = fetchHtml(url, location.name);
+
+        if (!htmlResult.success) {
+          const errorLabel = `${location.name} - ${dayConfig.day} (${dateStr})`;
+          errors.push({ errorLabel, error: htmlResult.error });
+          Logger.log(
+            `Error checking ${errorLabel}: ${htmlResult.error.type} - ${htmlResult.error.message}`
+          );
+          return;
+        }
+
+        // Step 3: Parse HTML to extract available slots
+        const slots = extractAvailableSlots(
+          htmlResult.data,
+          location,
+          dayConfig,
+          dateStr
+        );
+        allMatches.push(...slots);
+      });
     });
   });
 
@@ -87,8 +104,15 @@ export function checkCourtAvailability() {
     Logger.log('❌ No matching slots found for any configured location/day');
   }
 
-  // Update state with current results
-  updateState(allMatches, notificationSent);
+  // Update state with current results (but only if not all requests failed)
+  const allRequestsFailed = errors.length > 0 && allMatches.length === 0;
+  if (!allRequestsFailed) {
+    updateState(allMatches, notificationSent);
+  } else {
+    Logger.log(
+      '⚠️ All requests failed - skipping state update to preserve last known state'
+    );
+  }
 
   // Store errors for weekly summary instead of sending immediately
   if (errors.length > 0) {

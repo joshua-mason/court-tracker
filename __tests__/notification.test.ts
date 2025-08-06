@@ -44,7 +44,7 @@ describe('sendNotificationEmail', () => {
 
     expect(global.MailApp.sendEmail).toHaveBeenCalledWith({
       to: 'test@example.com',
-      subject: '🎾 Tennis slots available • Feb 6 • 1 courts found',
+      subject: '🎾 Tu 12p',
       htmlBody: expect.stringContaining('<table'),
     });
 
@@ -99,18 +99,16 @@ describe('sendNotificationEmail', () => {
     expect(htmlBody).toContain('king-edward-memorial-park/2024-02-06');
   });
 
-  test('formats date range correctly in subject', () => {
+  test('formats compact times correctly in subject', () => {
     const matches = [
-      createMockDay({ dateLabel: 'monday (2024-02-06)' }),
-      createMockDay({ dateLabel: 'friday (2024-02-09)' }),
+      createMockDay({ dateLabel: 'tuesday (2024-02-06)', time: '12 PM' }),
+      createMockDay({ dateLabel: 'friday (2024-02-09)', time: '12 PM' }),
     ];
 
     sendNotificationEmail(matches);
 
     const emailCall = (global.MailApp.sendEmail as jest.Mock).mock.calls[0][0];
-    expect(emailCall.subject).toBe(
-      '🎾 Tennis slots available • Feb 6-Feb 9 • 2 courts found'
-    );
+    expect(emailCall.subject).toBe('🎾 Tu 12p; F 12p');
   });
 
   test('logs successful email send', () => {

@@ -3,8 +3,7 @@ import { Day, CourtCheckError } from './types';
 import { generateHtmlEmail } from './html-renderer';
 
 export function sendNotificationEmail(allMatches: Day[]): void {
-  const dateRange = getDateRange(allMatches);
-  const subject = `🎾 Tennis slots available • ${dateRange} • ${allMatches.length} courts found`;
+  const subject = `🎾 ${getCompactTimesSummary(allMatches)}`;
 
   const htmlBody = generateHtmlEmail(allMatches);
 
@@ -74,27 +73,74 @@ export function sendWeeklyErrorSummaryNotification(
   );
 }
 
-function getDateRange(matches: Day[]): string {
-  if (matches.length === 0) return '';
+function getCompactTimesSummary(matches: Day[]): string {
+  if (matches.length === 0) return 'No slots available';
 
-  const dates = matches.map((m) => {
-    const match = m.dateLabel.match(/\((\d{4})-(\d{2})-(\d{2})\)/);
-    return match
-      ? new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]))
-      : new Date();
+  // Group by date
+  const slotsByDate = new Map<string, Day[]>();
+  matches.forEach((match) => {
+    const dateMatch = match.dateLabel.match(/\((\d{4})-(\d{2})-(\d{2})\)/);
+    if (dateMatch) {
+      const dateKey = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+      if (!slotsByDate.has(dateKey)) {
+        slotsByDate.set(dateKey, []);
+      }
+      slotsByDate.get(dateKey)!.push(match);
+    }
   });
 
-  const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
-  const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
+  // Sort dates chronologically
+  const sortedDates = Array.from(slotsByDate.keys()).sort();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
 
-  const formatDate = (date: Date) => {
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
-    return `${month} ${date.getDate()}`;
-  };
+  let summary = '';
+  let totalChars = 0;
+  let processedSlots = 0;
+  const maxChars = 45; // Leave room for emoji and potential "+ X more"
 
-  if (minDate.getTime() === maxDate.getTime()) {
-    return formatDate(minDate);
-  } else {
-    return `${formatDate(minDate)}-${formatDate(maxDate)}`;
+  for (const dateKey of sortedDates) {
+    const dateSlots = slotsByDate.get(dateKey)!;
+    const [year, month, day] = dateKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    // Determine day label
+    let dayLabel: string;
+    if (dateKey === todayStr) {
+      dayLabel = 'Today';
+    } else {
+      const dayNames = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
+      dayLabel = dayNames[date.getDay()];
+    }
+
+    // Get times for this date, remove duplicates and sort
+    const times = [
+      ...new Set(
+        dateSlots.map((slot) => {
+          return slot.time
+            .replace(' PM', 'p')
+            .replace(' AM', 'a')
+            .toLowerCase();
+        })
+      ),
+    ].sort();
+
+    const dayPart = `${dayLabel} ${times.join(', ')}`;
+    const withSeparator = summary ? `; ${dayPart}` : dayPart;
+
+    // Check if adding this would exceed our limit
+    if (totalChars + withSeparator.length > maxChars) {
+      const remaining = matches.length - processedSlots;
+      if (remaining > 0) {
+        summary += ` + ${remaining} more`;
+      }
+      break;
+    }
+
+    summary += withSeparator;
+    totalChars += withSeparator.length;
+    processedSlots += dateSlots.length;
   }
+
+  return summary;
 }

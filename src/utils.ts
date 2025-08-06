@@ -1,10 +1,10 @@
 /**
  * Gets the next occurrence of a specific day of the week
- * Always returns a future date (never today, even if it matches)
+ * Includes today if it matches the target day
  *
  * Examples:
  * - If today is Tuesday and you ask for "wednesday", returns tomorrow
- * - If today is Tuesday and you ask for "tuesday", returns next Tuesday (in 7 days)
+ * - If today is Tuesday and you ask for "tuesday", returns today
  */
 export function getNextDateForDay(targetDay: string, fromDate: Date): Date {
   // JavaScript weekday indexes: Sunday=0, Monday=1, Tuesday=2, etc.
@@ -23,7 +23,8 @@ export function getNextDateForDay(targetDay: string, fromDate: Date): Date {
   const targetWeekday = dayToIndex[targetDay];
 
   let delta = (targetWeekday - currentDay + 7) % 7;
-  if (delta === 0) delta = 7; // Always move forward at least 1 week
+  // Include today if it matches
+  if (delta === 0) delta = 0;
 
   date.setDate(date.getDate() + delta);
   return date;
