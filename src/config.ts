@@ -49,7 +49,7 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
     watchDays: [
       {
         day: 'monday',
-        hours: ['12pm', '1pm', '6pm', '7pm', '8pm'],
+        hours: ['12pm', '6pm', '7pm', '8pm'],
       },
       {
         day: 'wednesday',
@@ -57,11 +57,11 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
       },
       {
         day: 'thursday',
-        hours: ['12pm', '1pm', '6pm', '7pm', '8pm'],
+        hours: ['6pm', '7pm', '8pm'],
       },
       {
         day: 'friday',
-        hours: ['12pm', '1pm', '6pm', '7pm', '8pm'],
+        hours: ['12pm', '6pm', '7pm', '8pm'],
       },
       {
         day: 'saturday',
