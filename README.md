@@ -1,6 +1,6 @@
 ## Court Tracker
 
-Get notified when tennis courts you care about open up. Zero infrastructure - runs entirely on Google Apps Script.
+Get notified when tennis courts you care about open up due to cancellations. Zero infrastructure - runs entirely on Google Apps Script.
 
 ### Overview
 
