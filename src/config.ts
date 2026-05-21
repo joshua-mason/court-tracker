@@ -148,5 +148,5 @@ export const LOCATION_SCHEDULES: LocationSchedule[] = [
 ];
 
 export const CONFIG = {
-  notificationEmail: 'jmmason95@googlemail.com',
+  notificationEmail: 'tennis-courts@googlegroups.com',
 };
