@@ -1,5 +1,7 @@
 import { Result, CourtCheckError } from './types';
 
+const PROXY_URL = 'https://court-proxy.jmmason95.workers.dev';
+
 /**
  * Determines if an HTTP status code should trigger a retry
  */
@@ -29,7 +31,8 @@ export function fetchHtml(
   const maxRetries = 2;
   const baseDelay = 1000; // 1 second
 
-  Logger.log(`Fetching HTML from: ${url}`);
+  const proxiedUrl = `${PROXY_URL}/?url=${encodeURIComponent(url)}`;
+  Logger.log(`Fetching HTML from: ${url} (via proxy)`);
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
@@ -42,7 +45,7 @@ export function fetchHtml(
 
     let html: string;
     try {
-      const resp = UrlFetchApp.fetch(url, {
+      const resp = UrlFetchApp.fetch(proxiedUrl, {
         muteHttpExceptions: true,
         headers: {
           'User-Agent':
@@ -64,6 +67,16 @@ export function fetchHtml(
       } else {
         // Check if this is a retryable error
         const isRetryable = isRetryableStatusCode(statusCode);
+
+        if (attempt === 0) {
+          const bodySnippet = resp
+            .getContentText()
+            .slice(0, 500)
+            .replace(/\s+/g, ' ');
+          Logger.log(
+            `HTTP ${statusCode} response body (first 500 chars): ${bodySnippet}`
+          );
+        }
 
         if (!isRetryable || attempt === maxRetries) {
           return {

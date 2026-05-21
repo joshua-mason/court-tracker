@@ -85,6 +85,6 @@ export default [
     },
   },
   {
-    ignores: ['build/**', 'node_modules/**', 'coverage/**'],
+    ignores: ['build/**', 'node_modules/**', 'coverage/**', 'worker/**'],
   },
 ]; 
