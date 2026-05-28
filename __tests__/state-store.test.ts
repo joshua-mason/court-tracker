@@ -36,7 +36,7 @@ describe('loadState', () => {
 
     const state = loadState();
     expect(state).toEqual({
-      lastResultsHash: '',
+      lastNotifiedSnapshots: {},
       lastNotificationTime: 0,
       storedErrors: [],
       lastErrorSummaryTime: 0,
@@ -45,14 +45,24 @@ describe('loadState', () => {
 
   test('parses and returns stored state, filling missing fields with defaults', () => {
     const storedState = {
-      lastResultsHash: 'abc123',
+      lastNotifiedSnapshots: {
+        'wapping::monday::2026-06-01': [
+          {
+            dateLabel: 'monday (2026-06-01)',
+            time: '12 PM',
+            url: 'https://example.com',
+            locationName: 'Wapping',
+            courtName: 'Court 1',
+          },
+        ],
+      },
       lastNotificationTime: 1234567890,
     };
     mockGetProperty.mockReturnValue(JSON.stringify(storedState));
 
     const state = loadState();
     expect(state).toEqual({
-      lastResultsHash: 'abc123',
+      lastNotifiedSnapshots: storedState.lastNotifiedSnapshots,
       lastNotificationTime: 1234567890,
       storedErrors: [],
       lastErrorSummaryTime: 0,
@@ -64,10 +74,20 @@ describe('loadState', () => {
 
     const state = loadState();
     expect(state).toEqual({
-      lastResultsHash: '',
+      lastNotifiedSnapshots: {},
       lastNotificationTime: 0,
       storedErrors: [],
       lastErrorSummaryTime: 0,
     });
+  });
+
+  test('migrates legacy state with lastResultsHash by defaulting snapshots to empty', () => {
+    mockGetProperty.mockReturnValue(
+      JSON.stringify({ lastResultsHash: 'old-hash', lastNotificationTime: 5 })
+    );
+
+    const state = loadState();
+    expect(state.lastNotifiedSnapshots).toEqual({});
+    expect(state.lastNotificationTime).toBe(5);
   });
 });

@@ -1,5 +1,5 @@
 import { COURT_LOCATIONS, LOCATION_SCHEDULES } from './config';
-import { Day, CourtCheckError } from './types';
+import { CourtCheckError } from './types';
 import { getNextDateForDay } from './utils';
 import { buildBookingUrl, extractAvailableSlots } from './html-parser';
 import { fetchHtml } from './http-client';
@@ -8,9 +8,12 @@ import {
   sendWeeklyErrorSummaryNotification,
 } from './notification';
 import {
-  hasResultsChanged,
-  updateState,
+  makeKey,
+  diff,
+  commitAsNotified,
+  getLastNotifiedSnapshots,
   getStateSummary,
+  SnapshotMap,
 } from './slot-state-repository';
 import {
   storeErrors,
@@ -23,10 +26,15 @@ import { generateHtmlEmail } from './html-renderer';
 export function checkCourtAvailability() {
   const now = new Date();
   const tz = Session.getScriptTimeZone();
-  const allMatches: Day[] = [];
+  const todayIso = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   const errors: Array<{ errorLabel: string; error: CourtCheckError }> = [];
 
-  // Process each location and its schedule
+  // Carry-forward semantics: start from the prior baseline so any tuples we
+  // fail to fetch this tick keep their last-known slots and don't get reported
+  // as "removed".
+  const previousSnapshots = getLastNotifiedSnapshots(todayIso);
+  const currentSnapshots: SnapshotMap = { ...previousSnapshots };
+
   LOCATION_SCHEDULES.forEach((schedule) => {
     const location = COURT_LOCATIONS.find(
       (loc) => loc.id === schedule.locationId
@@ -40,24 +48,19 @@ export function checkCourtAvailability() {
     }
 
     schedule.watchDays.forEach((dayConfig) => {
-      // Generate dates to check: today (if matches) + next week's occurrence
       const datesToCheck: Date[] = [];
 
-      // Always check next week's occurrence
       const nextWeekDate = getNextDateForDay(dayConfig.day, now);
       if (nextWeekDate.toDateString() === now.toDateString()) {
-        // If "next" date is today, also check next week
-        datesToCheck.push(nextWeekDate); // Today
+        datesToCheck.push(nextWeekDate);
         const actualNextWeek = new Date(nextWeekDate);
         actualNextWeek.setDate(actualNextWeek.getDate() + 7);
-        datesToCheck.push(actualNextWeek); // Next week
+        datesToCheck.push(actualNextWeek);
       } else {
-        // Normal case - just next occurrence
         datesToCheck.push(nextWeekDate);
       }
 
       datesToCheck.forEach((targetDate) => {
-        // Step 1: Calculate date and build URL
         const dateStr = Utilities.formatDate(targetDate, tz, 'yyyy-MM-dd');
         const url = buildBookingUrl(location, dateStr);
 
@@ -65,7 +68,6 @@ export function checkCourtAvailability() {
           `Checking ${location.name} - ${dayConfig.day} (${dateStr}) at ${url}`
         );
 
-        // Step 2: Fetch HTML
         const htmlResult = fetchHtml(url, location.name);
 
         if (!htmlResult.success) {
@@ -77,62 +79,53 @@ export function checkCourtAvailability() {
           return;
         }
 
-        // Step 3: Parse HTML to extract available slots
         const slots = extractAvailableSlots(
           htmlResult.data,
           location,
           dayConfig,
           dateStr
         );
-        allMatches.push(...slots);
+        const key = makeKey(location.id, dayConfig.day, dateStr);
+        currentSnapshots[key] = slots;
       });
     });
   });
 
-  // Log current state for debugging
   Logger.log(`${getStateSummary()}`);
 
-  // Check if results have changed and send notifications accordingly
-  const resultsChanged = hasResultsChanged(allMatches);
-  let notificationSent = false;
+  const { added, removed, allCurrent } = diff(
+    currentSnapshots,
+    previousSnapshots
+  );
 
-  if (allMatches.length > 0 && resultsChanged) {
-    sendNotificationEmail(allMatches);
-    notificationSent = true;
-    Logger.log('✅ Notification sent - results changed');
-  } else if (allMatches.length > 0 && !resultsChanged) {
-    Logger.log('🔄 Slots found but unchanged - no notification sent');
-  } else {
-    Logger.log('❌ No matching slots found for any configured location/day');
-  }
-
-  // Update state with current results (but only if not all requests failed)
-  const allRequestsFailed = errors.length > 0 && allMatches.length === 0;
-  if (!allRequestsFailed) {
-    updateState(allMatches, notificationSent);
-  } else {
+  const hasChanges = added.length > 0 || removed.length > 0;
+  if (hasChanges && allCurrent.length > 0) {
+    sendNotificationEmail(allCurrent);
+    commitAsNotified(currentSnapshots, todayIso);
     Logger.log(
-      '⚠️ All requests failed - skipping state update to preserve last known state'
+      `✅ Notification sent — ${added.length} added, ${removed.length} removed`
     );
+  } else if (hasChanges) {
+    Logger.log(
+      `🔇 Changes detected (${removed.length} removed) but no current slots — skipping email`
+    );
+  } else {
+    Logger.log('🔄 No changes since last notification');
   }
 
-  // Store errors for weekly summary instead of sending immediately
   if (errors.length > 0) {
     storeErrors(errors);
     Logger.log(`Stored ${errors.length} errors for weekly summary`);
   }
 
-  // Check if we should send weekly error summary
   if (shouldSendErrorSummary()) {
     const storedErrors = getAndClearStoredErrors();
     Logger.log(
       `Sending weekly error summary with ${storedErrors.length} total errors`
     );
 
-    // Send weekly error summary with timestamps
     sendWeeklyErrorSummaryNotification(storedErrors, now, tz);
   }
 }
 
-// Export for preview script
 export { generateHtmlEmail };

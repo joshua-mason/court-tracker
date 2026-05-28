@@ -19,8 +19,8 @@ const THEMES: LocationTheme[] = [
   },
 ];
 
-export function generateHtmlEmail(allMatches: Day[]): string {
-  const grouped = groupMatchesByLocation(allMatches);
+export function generateHtmlEmail(allCurrent: Day[]): string {
+  const grouped = groupMatchesByLocation(allCurrent);
 
   let html = `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

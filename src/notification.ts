@@ -2,10 +2,10 @@ import { CONFIG } from './config';
 import { Day, CourtCheckError } from './types';
 import { generateHtmlEmail } from './html-renderer';
 
-export function sendNotificationEmail(allMatches: Day[]): void {
-  const subject = `🎾 ${getCompactTimesSummary(allMatches)}`;
+export function sendNotificationEmail(allCurrent: Day[]): void {
+  const subject = `🎾 ${getCompactTimesSummary(allCurrent)}`;
 
-  const htmlBody = generateHtmlEmail(allMatches);
+  const htmlBody = generateHtmlEmail(allCurrent);
 
   MailApp.sendEmail({
     to: CONFIG.notificationEmail,
@@ -13,7 +13,7 @@ export function sendNotificationEmail(allMatches: Day[]): void {
     htmlBody,
   });
 
-  Logger.log(`Sent 1 email with ${allMatches.length} slot(s)`);
+  Logger.log(`Sent 1 email with ${allCurrent.length} slot(s)`);
 }
 
 export function sendWeeklyErrorSummaryNotification(

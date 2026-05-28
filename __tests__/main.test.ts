@@ -39,7 +39,7 @@ jest.mock('../src/notification');
 
 import { fetchHtml } from '../src/http-client';
 import { extractAvailableSlots, buildBookingUrl } from '../src/html-parser';
-import { hasResultsChanged } from '../src/slot-state-repository';
+import { diff, getLastNotifiedSnapshots } from '../src/slot-state-repository';
 import { shouldSendErrorSummary } from '../src/error-queue-repository';
 
 // Mock GAS global objects
@@ -77,7 +77,12 @@ describe('checkCourtAvailability - Dual Checking Behavior', () => {
     );
 
     (extractAvailableSlots as jest.Mock).mockReturnValue([]);
-    (hasResultsChanged as jest.Mock).mockReturnValue(false);
+    (getLastNotifiedSnapshots as jest.Mock).mockReturnValue({});
+    (diff as jest.Mock).mockReturnValue({
+      added: [],
+      removed: [],
+      allCurrent: [],
+    });
     (shouldSendErrorSummary as jest.Mock).mockReturnValue(false);
   });
 

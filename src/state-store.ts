@@ -1,7 +1,7 @@
-import { CourtCheckError } from './types';
+import { CourtCheckError, Day } from './types';
 
 export interface StoreState {
-  lastResultsHash: string;
+  lastNotifiedSnapshots: Record<string, Day[]>;
   lastNotificationTime: number;
   storedErrors: Array<{
     errorLabel: string;
@@ -13,31 +13,24 @@ export interface StoreState {
 
 const STORE_KEY = 'courtTrackerState';
 
-const DEFAULT_STATE: StoreState = {
-  lastResultsHash: '',
-  lastNotificationTime: 0,
-  storedErrors: [],
-  lastErrorSummaryTime: 0,
-};
-
 export function loadState(): StoreState {
   const stored = PropertiesService.getScriptProperties().getProperty(STORE_KEY);
 
   if (!stored) {
-    return { ...DEFAULT_STATE };
+    return cloneDefault();
   }
 
   try {
     const parsed = JSON.parse(stored);
     return {
-      lastResultsHash: parsed.lastResultsHash || '',
+      lastNotifiedSnapshots: parsed.lastNotifiedSnapshots || {},
       lastNotificationTime: parsed.lastNotificationTime || 0,
       storedErrors: parsed.storedErrors || [],
       lastErrorSummaryTime: parsed.lastErrorSummaryTime || 0,
     };
   } catch (e) {
     Logger.log(`Warning: Failed to parse stored state: ${e}`);
-    return { ...DEFAULT_STATE };
+    return cloneDefault();
   }
 }
 
@@ -47,8 +40,18 @@ export function saveState(state: StoreState): void {
       STORE_KEY,
       JSON.stringify(state)
     );
-    Logger.log(`State saved: hash=${state.lastResultsHash.substring(0, 8)}...`);
+    const snapshotCount = Object.keys(state.lastNotifiedSnapshots).length;
+    Logger.log(`State saved: ${snapshotCount} snapshot key(s)`);
   } catch (e) {
     Logger.log(`Error saving state: ${e}`);
   }
+}
+
+function cloneDefault(): StoreState {
+  return {
+    lastNotifiedSnapshots: {},
+    lastNotificationTime: 0,
+    storedErrors: [],
+    lastErrorSummaryTime: 0,
+  };
 }
