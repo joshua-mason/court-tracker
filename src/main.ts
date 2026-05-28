@@ -11,10 +11,12 @@ import {
   hasResultsChanged,
   updateState,
   getStateSummary,
+} from './slot-state-repository';
+import {
   storeErrors,
   shouldSendErrorSummary,
   getAndClearStoredErrors,
-} from './store';
+} from './error-queue-repository';
 import { generateHtmlEmail } from './html-renderer';
 
 // Entry point for the hourly trigger

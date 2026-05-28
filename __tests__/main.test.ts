@@ -33,12 +33,14 @@ jest.mock('../src/config', () => ({
 
 jest.mock('../src/http-client');
 jest.mock('../src/html-parser');
-jest.mock('../src/store');
+jest.mock('../src/slot-state-repository');
+jest.mock('../src/error-queue-repository');
 jest.mock('../src/notification');
 
 import { fetchHtml } from '../src/http-client';
 import { extractAvailableSlots, buildBookingUrl } from '../src/html-parser';
-import { hasResultsChanged, shouldSendErrorSummary } from '../src/store';
+import { hasResultsChanged } from '../src/slot-state-repository';
+import { shouldSendErrorSummary } from '../src/error-queue-repository';
 
 // Mock GAS global objects
 global.Session = {

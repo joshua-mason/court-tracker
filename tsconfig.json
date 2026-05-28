@@ -1,21 +1,16 @@
 {
-    "compilerOptions": {
-      "target": "ES2019",
-      "lib": [
-        "esnext"
-      ],
-      "allowJs": true,
-      "skipLibCheck": true,
-      "strict": true,
-      "forceConsistentCasingInFileNames": true,
-      "noFallthroughCasesInSwitch": true,
-      "module": "esnext",
-      "moduleResolution": "node",
-      "outDir": "build"
-    },
-    "include": [
-      "src",
-      "__tests__"
-    ]
-  }
-    
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "outDir": "build",
+    "types": ["google-apps-script", "jest", "node"]
+  },
+  "include": ["src", "__tests__"]
+}
