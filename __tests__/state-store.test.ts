@@ -38,6 +38,7 @@ describe('loadState', () => {
     expect(state).toEqual({
       lastNotifiedSnapshots: {},
       lastNotificationTime: 0,
+      lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
     });
@@ -64,6 +65,7 @@ describe('loadState', () => {
     expect(state).toEqual({
       lastNotifiedSnapshots: storedState.lastNotifiedSnapshots,
       lastNotificationTime: 1234567890,
+      lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
     });
@@ -76,6 +78,7 @@ describe('loadState', () => {
     expect(state).toEqual({
       lastNotifiedSnapshots: {},
       lastNotificationTime: 0,
+      lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
     });

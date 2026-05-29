@@ -3,6 +3,7 @@ import { CourtCheckError, Day } from './types';
 export interface StoreState {
   lastNotifiedSnapshots: Record<string, Day[]>;
   lastNotificationTime: number;
+  lastCheckedAt: Record<string, number>;
   storedErrors: Array<{
     errorLabel: string;
     error: CourtCheckError;
@@ -25,6 +26,7 @@ export function loadState(): StoreState {
     return {
       lastNotifiedSnapshots: parsed.lastNotifiedSnapshots || {},
       lastNotificationTime: parsed.lastNotificationTime || 0,
+      lastCheckedAt: parsed.lastCheckedAt || {},
       storedErrors: parsed.storedErrors || [],
       lastErrorSummaryTime: parsed.lastErrorSummaryTime || 0,
     };
@@ -51,6 +53,7 @@ function cloneDefault(): StoreState {
   return {
     lastNotifiedSnapshots: {},
     lastNotificationTime: 0,
+    lastCheckedAt: {},
     storedErrors: [],
     lastErrorSummaryTime: 0,
   };

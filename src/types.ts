@@ -16,6 +16,8 @@ export type DayConfig = {
     | 'saturday'
     | 'sunday';
   hours: string[];
+  /** How often this day's schedule should be re-checked, in hours. Defaults to 1 (every tick). */
+  checkEveryHours?: number;
 };
 
 export type CourtLocation = {

@@ -3,6 +3,7 @@ import { loadState, saveState } from './state-store';
 
 export type SnapshotKey = string;
 export type SnapshotMap = Record<SnapshotKey, Day[]>;
+export type CadenceKey = string;
 
 export interface SnapshotDiff {
   added: Day[];
@@ -16,6 +17,32 @@ export function makeKey(
   date: string
 ): SnapshotKey {
   return `${locationId}::${dayOfWeek}::${date}`;
+}
+
+export function cadenceKey(locationId: string, dayOfWeek: string): CadenceKey {
+  return `${locationId}::${dayOfWeek}`;
+}
+
+export function isDue(
+  key: CadenceKey,
+  checkEveryHours: number,
+  now: number
+): boolean {
+  if (checkEveryHours <= 0) return true;
+  const lastCheckedAt = loadState().lastCheckedAt[key];
+  if (!lastCheckedAt) return true;
+  const intervalMs = checkEveryHours * 60 * 60 * 1000;
+  return now - lastCheckedAt >= intervalMs;
+}
+
+export function markChecked(keys: CadenceKey[], now: number): void {
+  if (keys.length === 0) return;
+  const state = loadState();
+  const updated = { ...state.lastCheckedAt };
+  for (const key of keys) {
+    updated[key] = now;
+  }
+  saveState({ ...state, lastCheckedAt: updated });
 }
 
 export function getLastNotifiedSnapshots(todayIso: string): SnapshotMap {
@@ -66,6 +93,9 @@ export function commitAsNotified(
     lastNotificationTime: Date.now(),
   });
 }
+
+/** Number of hours between checks when a schedule omits checkEveryHours. */
+export const DEFAULT_CHECK_EVERY_HOURS = 1;
 
 export function getStateSummary(): string {
   const state = loadState();

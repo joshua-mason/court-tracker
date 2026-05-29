@@ -39,7 +39,11 @@ jest.mock('../src/notification');
 
 import { fetchHtml } from '../src/http-client';
 import { extractAvailableSlots, buildBookingUrl } from '../src/html-parser';
-import { diff, getLastNotifiedSnapshots } from '../src/slot-state-repository';
+import {
+  diff,
+  getLastNotifiedSnapshots,
+  isDue,
+} from '../src/slot-state-repository';
 import { shouldSendErrorSummary } from '../src/error-queue-repository';
 
 // Mock GAS global objects
@@ -78,6 +82,7 @@ describe('checkCourtAvailability - Dual Checking Behavior', () => {
 
     (extractAvailableSlots as jest.Mock).mockReturnValue([]);
     (getLastNotifiedSnapshots as jest.Mock).mockReturnValue({});
+    (isDue as jest.Mock).mockReturnValue(true);
     (diff as jest.Mock).mockReturnValue({
       added: [],
       removed: [],
@@ -135,5 +140,68 @@ describe('checkCourtAvailability - Dual Checking Behavior', () => {
     expect(extractAvailableSlots).toHaveBeenCalledTimes(1);
 
     jest.useRealTimers();
+  });
+});
+
+describe('checkCourtAvailability - Cadence + Refresh-on-change', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    (fetchHtml as jest.Mock).mockReturnValue({
+      success: true,
+      data: '<html>mock</html>',
+    });
+    (buildBookingUrl as jest.Mock).mockImplementation(
+      (location, dateStr) =>
+        `${location.baseUrl}/book/courts/${location.path}/${dateStr}`
+    );
+    (extractAvailableSlots as jest.Mock).mockReturnValue([]);
+    (getLastNotifiedSnapshots as jest.Mock).mockReturnValue({});
+    (shouldSendErrorSummary as jest.Mock).mockReturnValue(false);
+    (diff as jest.Mock).mockReturnValue({
+      added: [],
+      removed: [],
+      allCurrent: [],
+    });
+
+    // Pin date to Monday so the tuesday config triggers a single fetch.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2024, 2, 4));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('skips fetching when the schedule is not due', () => {
+    (isDue as jest.Mock).mockReturnValue(false);
+
+    checkCourtAvailability();
+
+    expect(fetchHtml).not.toHaveBeenCalled();
+  });
+
+  test('fetches when the schedule is due', () => {
+    (isDue as jest.Mock).mockReturnValue(true);
+
+    checkCourtAvailability();
+
+    expect(fetchHtml).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not refresh-all when no change is detected', () => {
+    // Only one schedule in this config, so "refresh-all" path isn't directly
+    // observable here. But we can assert that the diff doesn't trigger an
+    // extra fetch when it reports no changes.
+    (isDue as jest.Mock).mockReturnValue(true);
+    (diff as jest.Mock).mockReturnValue({
+      added: [],
+      removed: [],
+      allCurrent: [],
+    });
+
+    checkCourtAvailability();
+
+    expect(fetchHtml).toHaveBeenCalledTimes(1);
   });
 });
