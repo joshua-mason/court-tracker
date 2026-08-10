@@ -21,6 +21,22 @@ function isRetryableStatusCode(statusCode: number): boolean {
   ].includes(statusCode);
 }
 
+/** First 500 chars of a response body, whitespace-collapsed, for log output. */
+function snippet(html: string): string {
+  return html.slice(0, 500).replace(/\s+/g, ' ');
+}
+
+/**
+ * Detects the human-verification interstitial the site serves in place of the
+ * booking page. It returns HTTP 200, so status code alone cannot catch it.
+ */
+function isBotChallenge(html: string): boolean {
+  return (
+    /verify-human|cf-turnstile|challenges\.cloudflare\.com/i.test(html) ||
+    /verify that you're actually a person/i.test(html)
+  );
+}
+
 /**
  * Fetches HTML content from a URL with proper error handling and retry logic
  */
@@ -69,12 +85,8 @@ export function fetchHtml(
         const isRetryable = isRetryableStatusCode(statusCode);
 
         if (attempt === 0) {
-          const bodySnippet = resp
-            .getContentText()
-            .slice(0, 500)
-            .replace(/\s+/g, ' ');
           Logger.log(
-            `HTTP ${statusCode} response body (first 500 chars): ${bodySnippet}`
+            `HTTP ${statusCode} response body (first 500 chars): ${snippet(resp.getContentText())}`
           );
         }
 
@@ -116,13 +128,35 @@ export function fetchHtml(
       continue; // Try again
     }
 
+    // The site may answer 200 with a "verify you're human" interstitial instead
+    // of the booking table. Detect it explicitly so the failure names its cause
+    // rather than surfacing as a generic parse error.
+    if (isBotChallenge(html)) {
+      Logger.log(
+        `🤖 Bot challenge served for ${locationName} (${html.length} bytes) — body: ${snippet(html)}`
+      );
+      return {
+        success: false,
+        error: {
+          type: 'bot_challenge',
+          message:
+            'Blocked by human-verification interstitial (Cloudflare Turnstile)',
+          url,
+          locationName,
+        },
+      };
+    }
+
     // Basic HTML validation
     if (!/<tr>/.test(html)) {
+      Logger.log(
+        `❌ No <tr> in response for ${locationName} (${html.length} bytes) — body: ${snippet(html)}`
+      );
       return {
         success: false,
         error: {
           type: 'html_parse_error',
-          message: 'No <tr> elements found - possible HTML structure change',
+          message: `No <tr> elements found - possible HTML structure change (${html.length} bytes)`,
           url,
           locationName,
         },

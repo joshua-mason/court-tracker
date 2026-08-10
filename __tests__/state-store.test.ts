@@ -41,6 +41,7 @@ describe('loadState', () => {
       lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
+      lastFailureAlertTime: 0,
     });
   });
 
@@ -68,6 +69,7 @@ describe('loadState', () => {
       lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
+      lastFailureAlertTime: 0,
     });
   });
 
@@ -81,6 +83,7 @@ describe('loadState', () => {
       lastCheckedAt: {},
       storedErrors: [],
       lastErrorSummaryTime: 0,
+      lastFailureAlertTime: 0,
     });
   });
 

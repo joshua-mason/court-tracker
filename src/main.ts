@@ -6,6 +6,7 @@ import { fetchHtml } from './http-client';
 import {
   sendNotificationEmail,
   sendWeeklyErrorSummaryNotification,
+  sendFetchFailureAlert,
 } from './notification';
 import {
   makeKey,
@@ -23,6 +24,8 @@ import {
   storeErrors,
   shouldSendErrorSummary,
   getAndClearStoredErrors,
+  shouldSendFailureAlert,
+  markFailureAlertSent,
 } from './error-queue-repository';
 import { generateHtmlEmail } from './html-renderer';
 
@@ -33,6 +36,9 @@ interface ScheduleEntry {
 }
 
 type ErrorEntry = { errorLabel: string; error: CourtCheckError };
+
+/** Per-tick tally of individual date fetches, used to detect a total blackout. */
+type FetchStats = { attempted: number; succeeded: number };
 
 export function checkCourtAvailability() {
   const now = new Date();
@@ -52,7 +58,8 @@ export function checkCourtAvailability() {
   Logger.log(`Cadence: ${due.length} due, ${notDue.length} skipped this tick`);
 
   const fetchedKeys = new Set<string>();
-  fetchEntries(due, now, tz, currentSnapshots, errors, fetchedKeys);
+  const stats: FetchStats = { attempted: 0, succeeded: 0 };
+  fetchEntries(due, now, tz, currentSnapshots, errors, fetchedKeys, stats);
 
   Logger.log(`${getStateSummary()}`);
 
@@ -68,7 +75,7 @@ export function checkCourtAvailability() {
     Logger.log(
       `🔁 Change detected — refreshing ${notDue.length} skipped schedules`
     );
-    fetchEntries(notDue, now, tz, currentSnapshots, errors, fetchedKeys);
+    fetchEntries(notDue, now, tz, currentSnapshots, errors, fetchedKeys, stats);
     ({ added, removed, allCurrent } = diff(
       currentSnapshots,
       previousSnapshots
@@ -92,6 +99,21 @@ export function checkCourtAvailability() {
 
   if (fetchedKeys.size > 0) {
     markChecked(Array.from(fetchedKeys), nowMs);
+  }
+
+  // Total blackout: we fetched nothing successfully, so "no changes" above was
+  // an artefact of carry-forward, not evidence that availability is unchanged.
+  const isBlackout = stats.attempted > 0 && stats.succeeded === 0;
+  if (isBlackout) {
+    Logger.log(
+      `🚨 BLIND: all ${stats.attempted} fetch(es) failed — availability is unknown, not unchanged`
+    );
+    if (shouldSendFailureAlert(nowMs)) {
+      sendFetchFailureAlert(errors, now, tz);
+      markFailureAlertSent(nowMs);
+    } else {
+      Logger.log('Failure alert suppressed — already alerted within 24h');
+    }
   }
 
   if (errors.length > 0) {
@@ -155,12 +177,14 @@ function fetchEntries(
   tz: string,
   currentSnapshots: SnapshotMap,
   errors: ErrorEntry[],
-  fetchedKeys: Set<string>
+  fetchedKeys: Set<string>,
+  stats: FetchStats
 ): void {
   for (const entry of entries) {
     const datesToCheck = datesForEntry(entry.dayConfig, now);
     let anySuccess = false;
     for (const targetDate of datesToCheck) {
+      stats.attempted++;
       const dateStr = Utilities.formatDate(targetDate, tz, 'yyyy-MM-dd');
       const url = buildBookingUrl(entry.location, dateStr);
 
@@ -189,6 +213,7 @@ function fetchEntries(
         makeKey(entry.location.id, entry.dayConfig.day, dateStr)
       ] = slots;
       anySuccess = true;
+      stats.succeeded++;
     }
     if (anySuccess) fetchedKeys.add(entry.cadenceKey);
   }
