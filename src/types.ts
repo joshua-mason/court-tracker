@@ -50,7 +50,7 @@ export type Result<T, E = string> =
   | { success: false; error: E };
 
 export type CourtCheckError = {
-  type: 'fetch_error' | 'html_parse_error' | 'http_error';
+  type: 'fetch_error' | 'html_parse_error' | 'http_error' | 'bot_challenge';
   message: string;
   url?: string;
   statusCode?: number;

@@ -16,6 +16,53 @@ export function sendNotificationEmail(allCurrent: Day[]): void {
   Logger.log(`Sent 1 email with ${allCurrent.length} slot(s)`);
 }
 
+/**
+ * Sent when every fetch in a tick failed. Without this the run looks identical
+ * to "nothing changed", so a site-side block goes unnoticed for a week.
+ */
+export function sendFetchFailureAlert(
+  errors: Array<{ errorLabel: string; error: CourtCheckError }>,
+  now: Date,
+  tz: string
+): void {
+  const nowStr = Utilities.formatDate(now, tz, 'EEE dd MMM yyyy HH:mm');
+  const types = [...new Set(errors.map((e) => e.error.type))].sort();
+
+  const subject = `🚨 Court-watch BLIND: all ${errors.length} checks failed (${types.join(', ')})`;
+
+  let body = `Every court check failed at ${nowStr}.\n\n`;
+  body +=
+    'No availability emails can be sent until this is fixed — the tracker is ' +
+    'carrying forward stale data, so silence is NOT "no free courts".\n\n';
+
+  if (types.indexOf('bot_challenge') !== -1) {
+    body +=
+      'Cause: the site is serving a human-verification (Turnstile) page instead\n' +
+      'of the booking table. The scraper cannot clear this on its own.\n\n';
+  }
+
+  body += `Failures (${errors.length}):\n`;
+  errors.forEach(({ errorLabel, error }) => {
+    body += `   • ${errorLabel}: ${error.type}\n`;
+    if (error.message !== error.type) {
+      body += `     ${error.message}\n`;
+    }
+    if (error.url) {
+      body += `     ${error.url}\n`;
+    }
+  });
+
+  body += '\nThis alert is throttled to once every 24 hours.';
+
+  MailApp.sendEmail({
+    to: CONFIG.notificationEmail,
+    subject,
+    body,
+  });
+
+  Logger.log(`🚨 Sent fetch-failure alert for ${errors.length} failed checks`);
+}
+
 export function sendWeeklyErrorSummaryNotification(
   errors: Array<{
     errorLabel: string;

@@ -2,6 +2,7 @@ import { CourtCheckError } from './types';
 import { loadState, saveState } from './state-store';
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function storeErrors(
   errors: Array<{ errorLabel: string; error: CourtCheckError }>
@@ -28,6 +29,20 @@ export function shouldSendErrorSummary(): boolean {
     now - state.lastErrorSummaryTime >= ONE_WEEK_MS &&
     state.storedErrors.length > 0
   );
+}
+
+/**
+ * A total fetch failure means we cannot know whether slots changed, so the
+ * normal "no changes" path would stay silent indefinitely. Alert instead —
+ * throttled to once a day so a prolonged outage does not mail every tick.
+ */
+export function shouldSendFailureAlert(now: number): boolean {
+  return now - loadState().lastFailureAlertTime >= ONE_DAY_MS;
+}
+
+export function markFailureAlertSent(now: number): void {
+  const state = loadState();
+  saveState({ ...state, lastFailureAlertTime: now });
 }
 
 export function getAndClearStoredErrors(): Array<{

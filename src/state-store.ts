@@ -10,6 +10,7 @@ export interface StoreState {
     timestamp: number;
   }>;
   lastErrorSummaryTime: number;
+  lastFailureAlertTime: number;
 }
 
 const STORE_KEY = 'courtTrackerState';
@@ -29,6 +30,7 @@ export function loadState(): StoreState {
       lastCheckedAt: parsed.lastCheckedAt || {},
       storedErrors: parsed.storedErrors || [],
       lastErrorSummaryTime: parsed.lastErrorSummaryTime || 0,
+      lastFailureAlertTime: parsed.lastFailureAlertTime || 0,
     };
   } catch (e) {
     Logger.log(`Warning: Failed to parse stored state: ${e}`);
@@ -56,5 +58,6 @@ function cloneDefault(): StoreState {
     lastCheckedAt: {},
     storedErrors: [],
     lastErrorSummaryTime: 0,
+    lastFailureAlertTime: 0,
   };
 }
